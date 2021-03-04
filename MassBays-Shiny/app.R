@@ -20,7 +20,8 @@ library(gridExtra)
 library(plotly)
 
 # Loading and tidying data xlsx files
-Flats_Data <- read_csv("~/Dropbox/MA-Bays-Shiny/MassBays-Shiny/Flats_Data_MassBays.csv")
+#Flats_Data <- read_csv("~/Dropbox/MA-Bays-Shiny/MassBays-Shiny/Flats_Data_MassBays.csv")
+Flats_Data <- read_csv("Flats_Data_MassBays.csv")
 
 Tidy_Flats_Data <- Flats_Data %>% 
   gather(Year, FlatsAcreage, 8:10) %>%
@@ -29,21 +30,24 @@ Tidy_Flats_Data$Year <- as.factor(Tidy_Flats_Data$Year)
 
 #Grouped_Flats_Data<-tibble(split(Tidy_Flats_Data, Tidy_Flats_Data$`EMBAYMENT NAME`))
 
-Marsh_Data <- read_csv("~/Dropbox/MA-Bays-Shiny/MassBays-Shiny/Marsh_Data_MassBays.csv")
+#Marsh_Data <- read_csv("~/Dropbox/MA-Bays-Shiny/MassBays-Shiny/Marsh_Data_MassBays.csv")
+Marsh_Data <- read_csv("Marsh_Data_MassBays.csv")
 
 Tidy_Marsh_Data <- Marsh_Data %>% 
   gather(Year, MarshAcreage, 8:11) %>%
   drop_na(MarshAcreage)
 Tidy_Marsh_Data$Year <- as.factor(Tidy_Marsh_Data$Year)
 
-Seagrass_Data <- read_csv("~/Dropbox/MA-Bays-Shiny/MassBays-Shiny/Seagrass_Data_MassBays.csv")
+#Seagrass_Data <- read_csv("~/Dropbox/MA-Bays-Shiny/MassBays-Shiny/Seagrass_Data_MassBays.csv")
+Seagrass_Data <- read_csv("Seagrass_Data_MassBays.csv")
 
 Tidy_Seagrass_Data <- Seagrass_Data %>% 
   gather(Year, SeagrassAcreage, 8:15)%>%
   drop_na(SeagrassAcreage)
 Tidy_Seagrass_Data$Year <- as.factor(Tidy_Seagrass_Data$Year)
 
-MassBaysEmbayments <- st_read(dsn = "~/Dropbox/MA-Bays-Shiny/MassBays-Shiny/massbays_estuarine_embays_2021", layer = "massbays_estuarine_embays_2021")
+#MassBaysEmbayments <- st_read(dsn = "~/Dropbox/MA-Bays-Shiny/MassBays-Shiny/massbays_estuarine_embays_2021", layer = "massbays_estuarine_embays_2021")
+MassBaysEmbayments <- st_read(dsn = "massbays_estuarine_embays_2021", layer = "massbays_estuarine_embays_2021")
 
 MassBaysEmbayments <-
   st_transform(MassBaysEmbayments, crs = "+init=epsg:4326")

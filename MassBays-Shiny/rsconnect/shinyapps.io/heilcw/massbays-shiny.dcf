@@ -1,0 +1,10 @@
+name: massbays-shiny
+title:
+username:
+account: heilcw
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 3736167
+bundleId: 4301373
+url: https://heilcw.shinyapps.io/massbays-shiny/
+when: 1614882820.68022
