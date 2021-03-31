@@ -1,0 +1,12 @@
+name: MassBays-Shiny
+title: MassBays-Shiny
+username:
+account: eshum
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 3833887
+bundleId: 4412895
+url: https://eshum.shinyapps.io/MassBays-Shiny/
+when: 1617129531.90814
+asMultiple: FALSE
+asStatic: FALSE

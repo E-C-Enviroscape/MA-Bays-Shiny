@@ -20,39 +20,54 @@ library(gridExtra)
 library(plotly)
 
 # Loading and tidying data xlsx files
-#Flats_Data <- read_csv("~/Dropbox/MA-Bays-Shiny/MassBays-Shiny/Flats_Data_MassBays.csv")
 Flats_Data <- read_csv("Flats_Data_MassBays.csv")
+#Flats_Data <- merge(Flats_Data, Stressor_Data, by = "EMBAYMENT NAME", all = TRUE)
 
 Tidy_Flats_Data <- Flats_Data %>% 
   gather(Year, FlatsAcreage, 8:10) %>%
   drop_na(FlatsAcreage)
 Tidy_Flats_Data$Year <- as.factor(Tidy_Flats_Data$Year)
 
-#Grouped_Flats_Data<-tibble(split(Tidy_Flats_Data, Tidy_Flats_Data$`EMBAYMENT NAME`))
-
-#Marsh_Data <- read_csv("~/Dropbox/MA-Bays-Shiny/MassBays-Shiny/Marsh_Data_MassBays.csv")
 Marsh_Data <- read_csv("Marsh_Data_MassBays.csv")
+#Marsh_Data <- merge(Marsh_Data, Stressor_Data, by = "EMBAYMENT NAME", all = TRUE)
 
 Tidy_Marsh_Data <- Marsh_Data %>% 
   gather(Year, MarshAcreage, 8:11) %>%
   drop_na(MarshAcreage)
 Tidy_Marsh_Data$Year <- as.factor(Tidy_Marsh_Data$Year)
 
-#Seagrass_Data <- read_csv("~/Dropbox/MA-Bays-Shiny/MassBays-Shiny/Seagrass_Data_MassBays.csv")
 Seagrass_Data <- read_csv("Seagrass_Data_MassBays.csv")
+#Seagrass_Data <- merge(Seagrass_Data, Stressor_Data, by = "EMBAYMENT NAME", all = TRUE)
 
 Tidy_Seagrass_Data <- Seagrass_Data %>% 
   gather(Year, SeagrassAcreage, 8:15)%>%
   drop_na(SeagrassAcreage)
 Tidy_Seagrass_Data$Year <- as.factor(Tidy_Seagrass_Data$Year)
 
-#MassBaysEmbayments <- st_read(dsn = "~/Dropbox/MA-Bays-Shiny/MassBays-Shiny/massbays_estuarine_embays_2021", layer = "massbays_estuarine_embays_2021")
 MassBaysEmbayments <- st_read(dsn = "massbays_estuarine_embays_2021", layer = "massbays_estuarine_embays_2021")
 
 MassBaysEmbayments <-
   st_transform(MassBaysEmbayments, crs = "+init=epsg:4326")
 
 MassBaysEmbayments <- st_zm(MassBaysEmbayments, drop = T, what = "ZM")
+
+# Loading stressor data xlsx files
+Stressor_Data <- read_csv("EDA2Redo_TH_7-15-2020.csv")
+Stressor_Data <- merge(Flats_Data, Stressor_Data, by = "EMBAYMENT NAME", all = TRUE)
+Stressor_Data <- subset(Stressor_Data, select = -c(5:14, 29:33))
+
+##### Normalizing Stressor Data ################
+Stressor_Data_norm <- as.data.frame(apply(Stressor_Data[ ,5:18], 2, function(x) (x - min(x, na.rm = TRUE))/(max(x, na.rm = TRUE)-min(x, na.rm = TRUE))))
+Stressor_Data_norm$`EMBAYMENT NAME` <- Stressor_Data$`EMBAYMENT NAME`
+Stressor_Data_norm$EcoType <- Stressor_Data$EcoType
+Stressor_Data_norm$`MassBays Region` <- Stressor_Data$`MassBays Region`
+Stressor_Data_norm$Northeastern_category <- Stressor_Data$Northeastern_category
+
+##### Tidy Stressor Data ################
+Tidy_Stressor_Data_norm <-gather(Stressor_Data_norm, key = "Stressor", value = "Stressor_Value", tidal.flushing, 
+                                 unhardenable.uncorrected, total.shoreline, unhard.std, hard.of.hard, high.intensity,
+                                 stormwater, StormwaterSTD, pop.density, percent.septic, septic.acre, nutrient, bacteria, tidal.restrict)
+
 
 embayment_choices = c(
   "SELECT EMBAYMENT",
@@ -102,7 +117,15 @@ embayment_choices = c(
   "WELLFLEET HARBOR"
 )
 
-ecotype_choices = c("SELECT ECOTYPE","Blue", "Green", "Orange", "Yellow")
+ecotype_choices = c("SELECT ECOTYPE","Blue",
+                    "Green",
+                    "Orange",
+                    "Yellow")
+
+ecotype_definitions = c("High-energy, little or no modern sediment, exposed embayments (with relatively low shallow water habitat area)",
+                        "Medium- to high-energy, abundant modern sediment, exposed embayments",
+                        "Low- to medium-energy, little or no modern sediment, protected embayments",
+                        "Low-energy, abundant modern sediment, protected embayments")
 
 regions_choices = c(
   "SELECT REGION",
@@ -118,6 +141,20 @@ data_displayed =c("Percent Remaining", "Acres")
 category_choices = c("SELECT CATEGORY","1", "2", "3", "4", "NA")
 
 ui <- fluidPage(
+  titlePanel(
+    p(
+      img(height = '210px', width = '1286px', src = "MassBays_Image.png"),
+      br(),
+      h1("MassBays Data Visualization Application", align = "center"),
+      br(),
+      h4("Add Description of Application here", align = "center")
+    )
+  ),
+  headerPanel(
+    fluidRow(
+      h5("Add Map Description here", align = "center")
+    )
+  ),
   fluidRow(
     wellPanel(
       shinycssloaders::withSpinner(    
@@ -129,27 +166,30 @@ ui <- fluidPage(
   ),
   fluidRow(column(12,   
                   tabsetPanel(id = "plot_tabs",
-                              tabPanel("EcoType", value = "EcoType",
+                              tabPanel("Habitats by Ecotype", value = "EcoType",
                                        fluidRow(column(12,
                                                        selectInput("ecotype", label = "MassBays EcoType", choices = ecotype_choices)
                                        )),
                                        fluidRow(column(12,
+                                                       textOutput("definition")
+                                        )),
+                                       fluidRow(column(12, div(style="height:50px"),
                                                        tabsetPanel(id = "ecotype_data_tabs",
                                                                    tabPanel("Totals",
                                                                             sidebarPanel(radioButtons("data_ecotype_totals_displayed","Choose data option", data_displayed)),
-                                                                            mainPanel(plotlyOutput("ecotype_totals_profile", height = "500px"))
+                                                                            mainPanel(plotlyOutput("ecotype_totals_profile", height = "700px"))
                                                                    ),
                                                                    tabPanel("Seagrass",
                                                                             sidebarPanel(radioButtons("data_ecotype_seagrass_displayed","Choose data option", data_displayed)),
-                                                                            mainPanel(plotlyOutput("ecotype_seagrass_profile", height = "500px"))
+                                                                            mainPanel(plotlyOutput("ecotype_seagrass_profile", height = "700px"))
                                                                    ),
                                                                    tabPanel("Salt Marsh",
                                                                             sidebarPanel(radioButtons("data_ecotype_marsh_displayed","Choose data option", data_displayed)),
-                                                                            mainPanel(plotlyOutput("ecotype_marsh_profile", height = "500px"))
+                                                                            mainPanel(plotlyOutput("ecotype_marsh_profile", height = "700px"))
                                                                    ),
                                                                    tabPanel("Tidal Flats",
                                                                             sidebarPanel(radioButtons("data_ecotype_flats_displayed","Choose data option", data_displayed)),
-                                                                            mainPanel(plotlyOutput("ecotype_flats_profile", height = "500px"))
+                                                                            mainPanel(plotlyOutput("ecotype_flats_profile", height = "700px"))
                                                                    )
                                                        )
                                        ))
@@ -166,67 +206,85 @@ ui <- fluidPage(
                                        #       )
                                        #)
                               ),
-                              tabPanel("Northeastern Category", value = "Northeastern Category",
+                              tabPanel("Stressor-Resource Categories", value = "Northeastern Category",
                                        fluidRow(column(12,
                                                        selectInput("category", label = "Northeastern Category", choices = category_choices)
                                        )),
                                        fluidRow(column(12,
                                                        tabsetPanel(id = "category_data_tabs",
-                                                                   tabPanel("Totals",
-                                                                            sidebarPanel(radioButtons("data_category_totals_displayed","Choose data option", data_displayed)),
-                                                                            mainPanel(plotlyOutput("category_totals_profile", height = "500px"))
+                                                                   tabPanel("Driving Stressors",
+                                                                            plotlyOutput("driving_stressor_profile", height = "700px")
                                                                    ),
-                                                                   tabPanel("Seagrass",
-                                                                            sidebarPanel(radioButtons("data_category_seagrass_displayed","Choose data option", data_displayed)),
-                                                                            mainPanel(plotlyOutput("category_seagrass_profile", height = "500px"))
-                                                                   ),
-                                                                   tabPanel("Salt Marsh",
-                                                                            sidebarPanel(radioButtons("data_category_marsh_displayed","Choose data option", data_displayed)),
-                                                                            mainPanel(plotlyOutput("category_marsh_profile", height = "500px"))
-                                                                   ),
-                                                                   tabPanel("Tidal Flats",
-                                                                            sidebarPanel(radioButtons("data_category_flats_displayed","Choose data option", data_displayed)),
-                                                                            mainPanel(plotlyOutput("category_flats_profile", height = "500px"))
+                                                                   tabPanel("Other Stressors",
+                                                                          plotlyOutput("other_stressor_profile", height = "700px")
                                                                    )
                                                        )
                                        ))
+                                       # fluidRow(column(12,
+                                       #                 tabsetPanel(id = "category_data_tabs",
+                                       #                             tabPanel("Totals",
+                                       #                                      sidebarPanel(radioButtons("data_category_totals_displayed","Choose data option", data_displayed)),
+                                       #                                      mainPanel(plotlyOutput("category_totals_profile", height = "500px"))
+                                       #                             ),
+                                       #                             tabPanel("Seagrass",
+                                       #                                      sidebarPanel(radioButtons("data_category_seagrass_displayed","Choose data option", data_displayed)),
+                                       #                                      mainPanel(plotlyOutput("category_seagrass_profile", height = "500px"))
+                                       #                             ),
+                                       #                             tabPanel("Salt Marsh",
+                                       #                                      sidebarPanel(radioButtons("data_category_marsh_displayed","Choose data option", data_displayed)),
+                                       #                                      mainPanel(plotlyOutput("category_marsh_profile", height = "500px"))
+                                       #                             ),
+                                       #                             tabPanel("Tidal Flats",
+                                       #                                      sidebarPanel(radioButtons("data_category_flats_displayed","Choose data option", data_displayed)),
+                                       #                                      mainPanel(plotlyOutput("category_flats_profile", height = "500px"))
+                                       #                             )
+                                       #                 )
+                                       # ))
                               ),
-                              tabPanel("MassBays Region", value = "MassBays Region",
-                                       fluidRow(column(12,
-                                                       selectInput("region", label = "MassBays Region", choices = regions_choices)
-                                       )),
-                                       fluidRow(column(12,
-                                                       tabsetPanel(id = "region_data_tabs",
-                                                                   tabPanel("Totals",
-                                                                            sidebarPanel(radioButtons("data_region_totals_displayed","Choose data option", data_displayed)),
-                                                                            mainPanel(plotlyOutput("region_totals_profile", height = "500px"))
-                                                                   ),
-                                                                   tabPanel("Seagrass",
-                                                                            sidebarPanel(radioButtons("data_region_seagrass_displayed","Choose data option", data_displayed)),
-                                                                            mainPanel(plotlyOutput("region_seagrass_profile",height = "500px"))
-                                                                   ),
-                                                                   tabPanel("Salt Marsh",
-                                                                            sidebarPanel(radioButtons("data_region_marsh_displayed","Choose data option", data_displayed)),
-                                                                            mainPanel(plotlyOutput("region_marsh_profile",height = "500px"))
-                                                                   ),
-                                                                   tabPanel("Tidal Flats",
-                                                                            sidebarPanel(radioButtons("data_region_flats_displayed","Choose data option", data_displayed)),
-                                                                            mainPanel(plotlyOutput("region_flats_profile", height = "500px"))
-                                                                   )
-                                                       )
-                                       ))
-                              ),
+                              # tabPanel("MassBays Region", value = "MassBays Region",
+                              #          fluidRow(column(12,
+                              #                          selectInput("region", label = "MassBays Region", choices = regions_choices)
+                              #          )),
+                              #          fluidRow(column(12,
+                              #                          tabsetPanel(id = "region_data_tabs",
+                              #                                      tabPanel("Totals",
+                              #                                               sidebarPanel(radioButtons("data_region_totals_displayed","Choose data option", data_displayed)),
+                              #                                               mainPanel(plotlyOutput("region_totals_profile", height = "500px"))
+                              #                                      ),
+                              #                                      tabPanel("Seagrass",
+                              #                                               sidebarPanel(radioButtons("data_region_seagrass_displayed","Choose data option", data_displayed)),
+                              #                                               mainPanel(plotlyOutput("region_seagrass_profile",height = "500px"))
+                              #                                      ),
+                              #                                      tabPanel("Salt Marsh",
+                              #                                               sidebarPanel(radioButtons("data_region_marsh_displayed","Choose data option", data_displayed)),
+                              #                                               mainPanel(plotlyOutput("region_marsh_profile",height = "500px"))
+                              #                                      ),
+                              #                                      tabPanel("Tidal Flats",
+                              #                                               sidebarPanel(radioButtons("data_region_flats_displayed","Choose data option", data_displayed)),
+                              #                                               mainPanel(plotlyOutput("region_flats_profile", height = "500px"))
+                              #                                      )
+                              #                          )
+                              #          ))
+                              # ),
                               tabPanel("Embayment", value = "Embayment",
                                        fluidRow(column(12,
                                                        selectInput("embayment", label = "MassBays Embayment", choices = embayment_choices)
                                        )),
                                        fluidRow(column(12,
+                                                       textOutput("bay_ecotype"),
+                                                       textOutput("bay_category"),
+                                                       textOutput("bay_region"),
+                                       )),
+                                       fluidRow(column(12,div(style="height:10px"),
                                                        tabsetPanel(id = "embayment_data_tabs",
-                                                                   tabPanel("Graph",
+                                                                   tabPanel("Habitat Data",
                                                                             sidebarPanel(radioButtons("data_embayment_displayed","Choose data option", data_displayed)),
-                                                                            mainPanel(plotlyOutput("embayment_profiles", height = "500px"))
+                                                                            mainPanel(plotlyOutput("embayment_profiles", height = "600px"))
                                                                    ),
-                                                                   tabPanel(id = "emabyment_tables","Tables",
+                                                                   tabPanel("Stressor Data",
+                                                                            plotlyOutput("embayment_stressor_profiles", height = "600px")
+                                                                   ),
+                                                                   tabPanel(id = "emabyment_tables","Data Tables",
                                                                             tabsetPanel(id = "embayment_data",
                                                                                         tabPanel("Tidal Flats", value = "Tidal Flats",
                                                                                                  dataTableOutput("embayment_flats_table")
@@ -248,6 +306,27 @@ ui <- fluidPage(
 
 server <- function(input, output, session) {
   
+  #############################################################################
+  #################### Display Ecotype Color Defintions #######################
+  
+  output$definition <-renderText(
+    if(input$ecotype =="SELECT ECOTYPE"){
+      "Ecotype Definition:"
+    }
+    
+    else if(input$ecotype =="Blue"){
+      "Ecotype Definition: High-energy, little or no modern sediment, exposed embayments (with relatively low shallow water habitat area)"
+    }
+    else if(input$ecotype=="Green"){
+      "Ecotype Definition: Medium- to high-energy, abundant modern sediment, exposed embayments"
+    }
+    else if(input$ecotype=="Orange"){
+      "Ecotype Definition: Low- to medium-energy, little or no modern sediment, protected embayments"
+    }
+    else{
+      "Ecotype Definition: Low-energy, abundant modern sediment, protected embayments"
+    }
+  )
   ################################################################################ 
   #################### Creating the leaflet base map #############################
   
@@ -348,6 +427,45 @@ server <- function(input, output, session) {
   #    }
   #})
   
+  
+  #### Providing Embayment Info ####
+  output$bay_ecotype <-renderText({
+      if(input$embayment!=""){
+        if(input$embayment=="SELECT EMBAYMENT"){
+          "Ecotype: NA"
+        }
+        else{
+          selected_flats_embayment <- subset(Tidy_Flats_Data,Tidy_Flats_Data$`EMBAYMENT NAME`==input$embayment)
+          if(selected_flats_embayment$EcoType[1]=="Blue"){
+            "Ecotype: High-energy, little or no modern sediment, exposed embayments (with relatively low shallow water habitat area)"
+          }
+          else if(selected_flats_embayment$EcoType[1]=="Green"){
+            "Ecotype: Medium- to high-energy, abundant modern sediment, exposed embayments"
+          }
+          else if(selected_flats_embayment$EcoType[1]=="Orange"){
+            "Ecotype: Low- to medium-energy, little or no modern sediment, protected embayments"
+          }
+          else{
+            "Ecotype: Low-energy, abundant modern sediment, protected embayments"
+          }
+        }
+      }
+    })
+    
+  output$bay_category <-renderText({
+    if(input$embayment!=""){
+      selected_flats_embayment <- subset(Tidy_Flats_Data,Tidy_Flats_Data$`EMBAYMENT NAME`==input$embayment)
+      paste("Stressor-Resource Category: ", selected_flats_embayment$Northeastern_category[1])
+      }
+    })  
+  
+    output$bay_region <-renderText({
+      if(input$embayment!=""){
+        selected_flats_embayment <- subset(Tidy_Flats_Data,Tidy_Flats_Data$`EMBAYMENT NAME`==input$embayment)
+      paste("MassBays Region: ", selected_flats_embayment$`MassBays Region`[1])
+      }
+    })
+  
   ###### Generating Embayment Profiles with all habitats on one graph ######    
   output$embayment_profiles <- renderPlotly({
     if(input$plot_tabs!=""){
@@ -382,25 +500,48 @@ server <- function(input, output, session) {
         flats_marsh_embayment_data<-merge(selected_flats_embayment, selected_marsh_embayment, all = TRUE)
         all_selected_embayment_data<-merge(flats_marsh_embayment_data,selected_seagrass_embayment, all = TRUE)
         all_selected_embayment_data$Year <- as.numeric(as.character(all_selected_embayment_data$Year))
+        
         if(input$data_embayment_displayed=="Percent Remaining"){
-          e <-ggplot(all_selected_embayment_data,aes(x = Year, y = percent_remaining, color = Habitat))+
+          e <-ggplot(all_selected_embayment_data,aes(x = Year, y = percent_remaining, color = Habitat,
+                                                     text = (paste("Year: ",Year, "\n",
+                                                                   "Percent remaining: ",percent_remaining, "\n"))
+                                                     ))+
             geom_line(aes(group=Habitat))+
             geom_point()+
             scale_y_log10()+
             scale_x_continuous(breaks = seq(1760, 2020, by = 20))+
             #theme(legend.position="none")+
             ylab("Percent Remaining")
-          ggplotly(e)
+          ggplotly(e, tooltip = "text") %>%
+            rangeslider(1760, 2040, thickness=0.01)
         }
         else{
-          e <-ggplot(all_selected_embayment_data,aes(x = Year, y = Acreage, color = Habitat))+
+          e <-ggplot(all_selected_embayment_data,aes(x = Year, y = Acreage, color = Habitat,
+                                                     text = (paste("Year: ",Year, "\n",
+                                                                   "Acres: ",Acreage, "\n"))
+                                                     ))+
             geom_line(aes(group=Habitat))+
             geom_point()+
             scale_x_continuous(breaks = seq(1760, 2020, by = 20))+
             #theme(legend.position="none")+
             ylab("Acres")
-          ggplotly(e)
+          ggplotly(e, tooltip = "text") %>%
+            rangeslider(1760, 2040, thickness=0.01)
         }
+      }
+    }
+  })
+  
+  ####### Generate individual embayment stressor plots ###############
+  output$embayment_stressor_profiles <- renderPlotly({
+    if(input$plot_tabs!=""){
+      if(input$embayment!=""){
+        selected_embayment_stressor <- subset(Tidy_Stressor_Data_norm,Tidy_Stressor_Data_norm$`EMBAYMENT NAME`==input$embayment)
+        zz<-ggplot(selected_embayment_stressor,aes(x = Stressor, y = Stressor_Value, fill = Stressor, text = (paste("Stressor Value: ", Stressor_Value))))+
+          geom_col()+
+          theme(legend.position="none")+
+          ylab("Relative Stressor Value")
+        ggplotly(zz, tooltip = "text")
       }
     }
   })
@@ -493,23 +634,31 @@ server <- function(input, output, session) {
           ecotype_totals <- merge(ecotype_totals1,selected_ecotype_flats, all = TRUE)
           
           if(input$data_ecotype_totals_displayed=="Percent Remaining"){
-            d <-ggplot(ecotype_totals,aes(x = Year, y = percent_remaining, color = Habitat))+
+            d <-ggplot(ecotype_totals,aes(x = Year, y = percent_remaining, color = Habitat,
+                                          text = (paste("Year: ",Year, "\n",
+                                                        "Percent remaining: ",percent_remaining, "\n"))
+                                          ))+
               geom_line(aes(group=Habitat))+
               geom_point()+
               scale_y_log10()+
               scale_x_continuous(breaks = seq(1760, 2020, by = 20))+
               #theme(legend.position="none")+
               ylab("Percent Remaining")
-            ggplotly(d)
+            ggplotly(d, tooltip = "text") %>%
+              rangeslider(1760, 2040, thickness=0.01)
           }
           else{
-            d <-ggplot(ecotype_totals,aes(x = Year, y = TotalAcreage, color = Habitat))+
+            d <-ggplot(ecotype_totals,aes(x = Year, y = TotalAcreage, color = Habitat,
+                                          text = (paste("Year: ",Year, "\n",
+                                                        "Acres: ",TotalAcreage, "\n"))
+                                          ))+
               geom_line(aes(group=Habitat))+
               geom_point()+
               scale_x_continuous(breaks = seq(1760, 2020, by = 20))+
               #theme(legend.position="none")+
               ylab("Acres")
-            ggplotly(d)
+            ggplotly(d, tooltip = "text") %>%
+              rangeslider(1760, 2040, thickness=0.01)
           }
         }
       }
@@ -528,10 +677,16 @@ server <- function(input, output, session) {
         selected_seagrass_ecotype$Year <- as.numeric(as.character(selected_seagrass_ecotype$Year))
         seagrass_ecotype_per_rem<-selected_seagrass_ecotype %>%
           group_by(`EMBAYMENT NAME`) %>%
-          select(SeagrassAcreage, Year, `EMBAYMENT NAME`) %>%
+          select(SeagrassAcreage, Year, `EMBAYMENT NAME`, Northeastern_category, `MassBays Region`) %>%
           mutate(percent_remaining = (SeagrassAcreage/(SeagrassAcreage[nrow=1]))*100)
         if(input$data_ecotype_seagrass_displayed=="Percent Remaining"){
-          c <-ggplot(seagrass_ecotype_per_rem,aes(x = Year, y = percent_remaining, text = seagrass_ecotype_per_rem$`EMBAYMENT NAME`))+
+          c <-ggplot(seagrass_ecotype_per_rem,aes(x = Year, y = percent_remaining, 
+                                                text = (paste("Year: ",Year, "\n",
+                                                "Percent remaining: ",percent_remaining, "\n",
+                                                "Embayment: ",`EMBAYMENT NAME`, "\n",
+                                                "Stressor-Resource Category: ",Northeastern_category, "\n",
+                                                "MassBays Region: ",`MassBays Region`))
+                                                ))+
             geom_line(aes(group=`EMBAYMENT NAME`, color = `EMBAYMENT NAME`))+
             geom_point()+
             scale_y_log10()+
@@ -539,17 +694,25 @@ server <- function(input, output, session) {
             theme(legend.position="none")+
             ylab("Percent Remaining")+
             ggtitle("Displaying all embayments within this ecotype")
-          ggplotly(c)
+          ggplotly(c, tooltip = "text") %>%
+            rangeslider(1760, 2040, thickness=0.01) 
         }
         else{
-          c <-ggplot(seagrass_ecotype_per_rem,aes(x = Year, y = SeagrassAcreage, text = seagrass_ecotype_per_rem$`EMBAYMENT NAME`))+
+          c <-ggplot(seagrass_ecotype_per_rem,aes(x = Year, y = SeagrassAcreage, 
+                                                  text = (paste("Year: ",Year, "\n",
+                                                                "Acres: ",SeagrassAcreage, "\n",
+                                                                "Embayment: ",`EMBAYMENT NAME`, "\n",
+                                                                "Stressor-Resource Category: ",Northeastern_category, "\n",
+                                                                "MassBays Region: ",`MassBays Region`))
+                                                  ))+
             geom_line(aes(group=`EMBAYMENT NAME`, color = `EMBAYMENT NAME`))+
             geom_point()+
             scale_x_continuous(breaks = seq(1760, 2020, by = 20))+
             theme(legend.position="none")+
             ylab("Acres")+
             ggtitle("Displaying all embayments within this ecotype")
-          ggplotly(c)
+          ggplotly(c, tooltip = "text") %>%
+            rangeslider(1760, 2040, thickness=0.01)
         }
       }
     }
@@ -567,10 +730,16 @@ server <- function(input, output, session) {
         selected_marsh_ecotype$Year <- as.numeric(as.character(selected_marsh_ecotype$Year))
         marsh_ecotype_per_rem<-selected_marsh_ecotype %>%
           group_by(`EMBAYMENT NAME`) %>%
-          select(MarshAcreage, Year, `EMBAYMENT NAME`) %>%
+          select(MarshAcreage, Year, `EMBAYMENT NAME`, Northeastern_category, `MassBays Region`) %>%
           mutate(percent_remaining = (MarshAcreage/(MarshAcreage[nrow=1]))*100)
         if(input$data_ecotype_marsh_displayed=="Percent Remaining"){
-          b <-ggplot(marsh_ecotype_per_rem,aes(x = Year, y = percent_remaining, text = marsh_ecotype_per_rem$`EMBAYMENT NAME`))+
+          b <-ggplot(marsh_ecotype_per_rem,aes(x = Year, y = percent_remaining, 
+                                               text = (paste("Year: ",Year, "\n",
+                                                            "Percent remaining: ",percent_remaining, "\n",
+                                                            "Embayment: ",`EMBAYMENT NAME`, "\n",
+                                                            "Stressor-Resource Category: ",Northeastern_category, "\n",
+                                                            "MassBays Region: ",`MassBays Region`))
+                                               ))+
             geom_line(aes(group=`EMBAYMENT NAME`, color = `EMBAYMENT NAME`))+
             geom_point()+
             scale_y_log10()+
@@ -578,17 +747,25 @@ server <- function(input, output, session) {
             theme(legend.position="none")+
             ylab("Percent Remaining")+
             ggtitle("Displaying all embayments within this ecotype")
-          ggplotly(b)
+          ggplotly(b, tooltip = "text") %>%
+            rangeslider(1760, 2040, thickness=0.01)
         }
         else{
-          b <-ggplot(marsh_ecotype_per_rem,aes(x = Year, y = MarshAcreage, text = marsh_ecotype_per_rem$`EMBAYMENT NAME`))+
+          b <-ggplot(marsh_ecotype_per_rem,aes(x = Year, y = MarshAcreage, 
+                                               text = (paste("Year: ",Year, "\n",
+                                                             "Acres: ",MarshAcreage, "\n",
+                                                             "Embayment: ",`EMBAYMENT NAME`, "\n",
+                                                             "Stressor-Resource Category: ",Northeastern_category, "\n",
+                                                             "MassBays Region: ",`MassBays Region`))
+                                              ))+
             geom_line(aes(group=`EMBAYMENT NAME`, color = `EMBAYMENT NAME`))+
             geom_point()+
             scale_x_continuous(breaks = seq(1760, 2020, by = 20))+
             theme(legend.position="none")+
             ylab("Acres")+
             ggtitle("Displaying all embayments within this ecotype")
-          ggplotly(b)
+          ggplotly(b, tooltip = "text") %>%
+            rangeslider(1760, 2040, thickness=0.01)
         }
       }
     }
@@ -606,10 +783,16 @@ server <- function(input, output, session) {
         selected_flats_ecotype$Year <- as.numeric(as.character(selected_flats_ecotype$Year))
         flats_ecotype_per_rem<-selected_flats_ecotype %>%
           group_by(`EMBAYMENT NAME`) %>%
-          select(FlatsAcreage, Year, `EMBAYMENT NAME`) %>%
+          select(FlatsAcreage, Year, `EMBAYMENT NAME`, Northeastern_category, `MassBays Region`) %>%
           mutate(percent_remaining = (FlatsAcreage/(FlatsAcreage[nrow=1]))*100)
         if(input$data_ecotype_flats_displayed=="Percent Remaining"){
-          a <-ggplot(flats_ecotype_per_rem,aes(x = Year, y = percent_remaining, text = flats_ecotype_per_rem$`EMBAYMENT NAME`))+
+          a <-ggplot(flats_ecotype_per_rem,aes(x = Year, y = percent_remaining, 
+                                               text = (paste("Year: ",Year, "\n",
+                                                             "Percent remaining: ",percent_remaining, "\n",
+                                                             "Embayment: ",`EMBAYMENT NAME`, "\n",
+                                                             "Stressor-Resource Category: ",Northeastern_category, "\n",
+                                                             "MassBays Region: ",`MassBays Region`))
+                                              ))+
             geom_line(aes(group=`EMBAYMENT NAME`, color = `EMBAYMENT NAME`))+
             geom_point()+
             scale_y_log10()+
@@ -617,17 +800,25 @@ server <- function(input, output, session) {
             theme(legend.position="none")+
             ylab("Percent Remaining")+
             ggtitle("Displaying all embayments within this ecotype")
-          ggplotly(a)
+          ggplotly(a, tooltip = "text") %>%
+            rangeslider(1760, 2040, thickness=0.01)
         }
         else{
-          a <-ggplot(flats_ecotype_per_rem,aes(x = Year, y = FlatsAcreage, text = flats_ecotype_per_rem$`EMBAYMENT NAME`))+
+          a <-ggplot(flats_ecotype_per_rem,aes(x = Year, y = FlatsAcreage, 
+                                               text = (paste("Year: ",Year, "\n",
+                                                             "Acres: ",FlatsAcreage, "\n",
+                                                             "Embayment: ",`EMBAYMENT NAME`, "\n",
+                                                             "Stressor-Resource Category: ",Northeastern_category, "\n",
+                                                             "MassBays Region: ",`MassBays Region`))
+                                              ))+
             geom_line(aes(group=`EMBAYMENT NAME`, color = `EMBAYMENT NAME`))+
             geom_point()+
             scale_x_continuous(breaks = seq(1760, 2020, by = 20))+
             theme(legend.position="none")+
             ylab("Acres")+
             ggtitle("Displaying all embayments within this ecotype")
-          ggplotly(a)
+          ggplotly(a, tooltip = "text") %>%
+            rangeslider(1760, 2040, thickness=0.01)
         }
       }
     }
@@ -668,406 +859,544 @@ server <- function(input, output, session) {
   #
   
   ################################################################################   
+  ########## Generate Northeastern Category Stressor Profiles #############
+  
+  output$driving_stressor_profile <- renderPlotly({
+    if(input$category!=""){
+       if(input$category_data_tabs=="Driving Stressors"){
+         selected_category_stressor <- subset(Tidy_Stressor_Data_norm,Tidy_Stressor_Data_norm$Northeastern_category==input$category)
+              validate(
+              need(selected_category_stressor$Stressor_Value!="", "NO DATA AVAILABLE"))
+          filtered_stressor <-selected_category_stressor %>%
+            filter(
+              if(input$category=="1"){
+                Stressor == "unhard.std" | Stressor == "hard.of.hard"| Stressor == "tidal.flushing"
+              }
+              else if(input$category=="2"){
+                Stressor == "percent.septic"
+              }
+              else if(input$category=="3"){
+                Stressor == "bacteria" | Stressor == "hard.of.hard" | Stressor == "tidal.restrict"
+              }
+              else{
+                Stressor == "bacteria" | Stressor == "tidal.restrict"
+              }
+            )
+         xx<-ggplot(filtered_stressor,aes(x = `EMBAYMENT NAME`, y = Stressor_Value, fill = `EMBAYMENT NAME`,
+                                          text = (paste("Embayment: ",`EMBAYMENT NAME`))))+
+        geom_col(position = "dodge")+
+        facet_grid(.~Stressor)+
+        #theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=1)) +
+        theme(axis.title.x=element_blank(),
+              axis.text.x=element_blank(),
+              axis.ticks.x=element_blank())+
+        theme(legend.position="none")+
+        ylab("Relative Stressor Value")
+      ggplotly(xx, tooltip = "text")
+       }
+    }
+  })
+      
+  output$other_stressor_profile <- renderPlotly({
+    if(input$category!=""){
+      if(input$category_data_tabs=="Other Stressors"){
+        selected_category_stressor <- subset(Tidy_Stressor_Data_norm,Tidy_Stressor_Data_norm$Northeastern_category==input$category)
+        validate(
+          need(selected_category_stressor$Stressor_Value!="", "NO DATA AVAILABLE"))
+        filtered_stressor <-selected_category_stressor %>%
+          filter(
+            if(input$category=="1"){
+              Stressor == "unhardenable.uncorrected" | Stressor == "total.shoreline" |
+                Stressor == "high.intensity" | Stressor == "stormwater" | Stressor == "StormwaterSTD" | 
+                Stressor == "pop.density" | Stressor == "percent.septic" | Stressor == "septic.acre" | 
+                Stressor == "nutrient" | Stressor == "bacteria" | Stressor == "tidal.restrict" 
+            }
+            else if(input$category=="2"){
+              Stressor == "tidal.flushing" | Stressor == "unhardenable.uncorrected" | Stressor == "total.shoreline" |
+                Stressor == "unhard.std" | Stressor == "hard.of.hard" | Stressor == "high.intensity" | Stressor == "stormwater" |
+                Stressor == "StormwaterSTD" | Stressor == "pop.density" | Stressor == "septic.acre" | Stressor == "nutrient" | 
+                Stressor == "bacteria" | Stressor == "tidal.restrict"
+            }
+            else if(input$category=="3"){
+              Stressor == "tidal.flushing" | Stressor == "unhardenable.uncorrected" | Stressor == "total.shoreline" |
+                Stressor == "unhard.std" | Stressor == "high.intensity" | Stressor == "stormwater" |
+                Stressor == "StormwaterSTD" | Stressor == "pop.density" | Stressor == "percent.septic" |
+                Stressor == "septic.acre" | Stressor == "nutrient"
+            }
+            else{
+              Stressor == "tidal.flushing" | Stressor == "unhardenable.uncorrected" | Stressor == "total.shoreline" |
+                Stressor == "unhard.std" | Stressor == "hard.of.hard" | Stressor == "high.intensity" | Stressor == "stormwater" |
+                Stressor == "StormwaterSTD" | Stressor == "pop.density" | Stressor == "percent.septic" |
+                Stressor == "septic.acre" | Stressor == "nutrient"
+            }
+          )
+        yy<-ggplot(filtered_stressor,aes(x = `EMBAYMENT NAME`, y = Stressor_Value, fill = `EMBAYMENT NAME`,
+                                         text = (paste("Embayment: ",`EMBAYMENT NAME`))))+
+          geom_col(position = "dodge")+
+          facet_grid(.~Stressor)+
+          #theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=1)) +
+          theme(axis.title.x=element_blank(),
+                axis.text.x=element_blank(),
+                axis.ticks.x=element_blank())+
+          theme(legend.position="none")+
+          ylab("Relative Stressor Value")
+        ggplotly(yy, tooltip = "text")
+        }
+      }
+    })
+
+  
+  ################################################################################   
   ########## Generate Northeastern Category data profiles and tables #############
   
-  ############ Northeastern Category: Totals data profiles ###################
-  
-  output$category_totals_profile <- renderPlotly({
-    if(input$plot_tabs=="Northeastern Category"){
-      if(input$category_data_tabs=="Totals"){
-        if(input$category!=""){
-          ###Seagrass###
-          selected_category_seagrass <- subset(Tidy_Seagrass_Data,Tidy_Seagrass_Data$Northeastern_category==input$category)
-          validate(
-            need(selected_category_seagrass$SeagrassAcreage!="", "NO SEAGRASS DATA AVAILABLE")
-          )
-          selected_category_seagrass <- aggregate(selected_category_seagrass$SeagrassAcreage, by=list(Category=selected_category_seagrass$Year), FUN=sum)
-          colnames(selected_category_seagrass)[colnames(selected_category_seagrass) == "Category"] <- "Year"
-          colnames(selected_category_seagrass)[colnames(selected_category_seagrass) == "x"] <- "TotalAcreage"
-          for(i in 1:nrow(selected_category_seagrass)) {
-            selected_category_seagrass$percent_remaining[i]<-(((selected_category_seagrass$TotalAcreage)[i])/((selected_category_seagrass$TotalAcreage)[1])*100)
-          }
-          selected_category_seagrass$Year <- as.numeric(as.character(selected_category_seagrass$Year))
-          selected_category_seagrass$Habitat<-(NA)
-          for(i in 1:nrow(selected_category_seagrass)) {
-            selected_category_seagrass$Habitat[i]<-("Seagrass")
-          }
-          ###Salt Marsh###
-          selected_category_marsh <- subset(Tidy_Marsh_Data,Tidy_Marsh_Data$Northeastern_category==input$category)
-          validate(
-            need(selected_category_marsh$MarshAcreage!="", "NO marsh DATA AVAILABLE")
-          )
-          selected_category_marsh <- aggregate(selected_category_marsh$MarshAcreage, by=list(Category=selected_category_marsh$Year), FUN=sum)
-          colnames(selected_category_marsh)[colnames(selected_category_marsh) == "Category"] <- "Year"
-          colnames(selected_category_marsh)[colnames(selected_category_marsh) == "x"] <- "TotalAcreage"
-          for(i in 1:nrow(selected_category_marsh)) {
-            selected_category_marsh$percent_remaining[i]<-(((selected_category_marsh$TotalAcreage)[i])/((selected_category_marsh$TotalAcreage)[1])*100)
-          }
-          selected_category_marsh$Year <- as.numeric(as.character(selected_category_marsh$Year))
-          selected_category_marsh$Habitat<-(NA)
-          for(i in 1:nrow(selected_category_marsh)) {
-            selected_category_marsh$Habitat[i]<-("Salt Marsh")
-          }
-          ###Tidal Flats###
-          selected_category_flats <- subset(Tidy_Flats_Data,Tidy_Flats_Data$Northeastern_category==input$category)
-          validate(
-            need(selected_category_flats$FlatsAcreage!="", "NO flats DATA AVAILABLE")
-          )
-          selected_category_flats <- aggregate(selected_category_flats$FlatsAcreage, by=list(Category=selected_category_flats$Year), FUN=sum)
-          colnames(selected_category_flats)[colnames(selected_category_flats) == "Category"] <- "Year"
-          colnames(selected_category_flats)[colnames(selected_category_flats) == "x"] <- "TotalAcreage"
-          for(i in 1:nrow(selected_category_flats)) {
-            selected_category_flats$percent_remaining[i]<-(((selected_category_flats$TotalAcreage)[i])/((selected_category_flats$TotalAcreage)[1])*100)
-          }
-          selected_category_flats$Year <- as.numeric(as.character(selected_category_flats$Year))
-          selected_category_flats$Habitat<-(NA)
-          for(i in 1:nrow(selected_category_flats)) {
-            selected_category_flats$Habitat[i]<-("Tidal Flats")
-          }   
-          category_totals1 <- merge(selected_category_seagrass,selected_category_marsh, all = TRUE)
-          category_totals <- merge(category_totals1,selected_category_flats, all = TRUE)
-          
-          if(input$data_category_totals_displayed=="Percent Remaining"){
-            w <-ggplot(category_totals,aes(x = Year, y = percent_remaining, color = Habitat))+
-              geom_line(aes(group=Habitat))+
-              geom_point()+
-              scale_y_log10()+
-              scale_x_continuous(breaks = seq(1760, 2020, by = 20))+
-              #theme(legend.position="none")+
-              ylab("Percent Remaining")
-            ggplotly(w)
-          }
-          else{
-            w <-ggplot(category_totals,aes(x = Year, y = TotalAcreage, color = Habitat))+
-              geom_line(aes(group=Habitat))+
-              geom_point()+
-              scale_x_continuous(breaks = seq(1760, 2020, by = 20))+
-              #theme(legend.position="none")+
-              ylab("Acres")
-            ggplotly(w)
-          }
-        }
-      }
-    }
-  })
-  
-  ######### Northeastern Category: Seagrass data profiles #################         
-  
-  output$category_seagrass_profile <- renderPlotly({
-    if(input$plot_tabs=="Northeastern Category"){
-      if(input$category!=""){
-        selected_seagrass_category <- subset(Tidy_Seagrass_Data,Tidy_Seagrass_Data$Northeastern_category==input$category)
-        validate(
-          need(selected_seagrass_category$SeagrassAcreage!="", "NO SEAGRASS DATA AVAILABLE")
-        )
-        selected_seagrass_category$Year <- as.numeric(as.character(selected_seagrass_category$Year))
-        seagrass_category_per_rem<-selected_seagrass_category %>%
-          group_by(`EMBAYMENT NAME`) %>%
-          select(SeagrassAcreage, Year, `EMBAYMENT NAME`) %>%
-          mutate(percent_remaining = (SeagrassAcreage/(SeagrassAcreage[nrow=1]))*100)
-        if(input$data_category_seagrass_displayed=="Percent Remaining"){
-          v <-ggplot(seagrass_category_per_rem,aes(x = Year, y = percent_remaining, text = seagrass_category_per_rem$`EMBAYMENT NAME`))+
-            geom_line(aes(group=`EMBAYMENT NAME`, color = `EMBAYMENT NAME`))+
-            geom_point()+
-            scale_y_log10()+
-            scale_x_continuous(breaks = seq(1760, 2020, by = 20))+
-            theme(legend.position="none")+
-            ylab("Percent Remaining")+
-            ggtitle("Displaying all embayments within this category")
-          ggplotly(v)
-        }
-        else{
-          v <-ggplot(seagrass_category_per_rem,aes(x = Year, y = SeagrassAcreage, text = seagrass_category_per_rem$`EMBAYMENT NAME`))+
-            geom_line(aes(group=`EMBAYMENT NAME`, color = `EMBAYMENT NAME`))+
-            geom_point()+
-            scale_x_continuous(breaks = seq(1760, 2020, by = 20))+
-            theme(legend.position="none")+
-            ylab("Acres")+
-            ggtitle("Displaying all embayments within this category")
-          ggplotly(v)
-        }
-      }
-    }
-  })
-  
-  ############# Northeastern Category: Salt Marsh data profiles #################       
-  
-  output$category_marsh_profile <- renderPlotly({
-    if(input$plot_tabs=="Northeastern Category"){
-      if(input$category!=""){
-        selected_marsh_category <- subset(Tidy_Marsh_Data,Tidy_Marsh_Data$Northeastern_category==input$category)
-        validate(
-          need(selected_marsh_category$MarshAcreage!="", "NO SALT MARSH DATA AVAILABLE")
-        )
-        selected_marsh_category$Year <- as.numeric(as.character(selected_marsh_category$Year))
-        marsh_category_per_rem<-selected_marsh_category %>%
-          group_by(`EMBAYMENT NAME`) %>%
-          select(MarshAcreage, Year, `EMBAYMENT NAME`) %>%
-          mutate(percent_remaining = (MarshAcreage/(MarshAcreage[nrow=1]))*100)
-        if(input$data_category_marsh_displayed=="Percent Remaining"){
-          u <-ggplot(marsh_category_per_rem,aes(x = Year, y = percent_remaining, text = marsh_category_per_rem$`EMBAYMENT NAME`))+
-            geom_line(aes(group=`EMBAYMENT NAME`, color = `EMBAYMENT NAME`))+
-            geom_point()+
-            scale_y_log10()+
-            scale_x_continuous(breaks = seq(1760, 2020, by = 20))+
-            theme(legend.position="none")+
-            ylab("Percent Remaining")+
-            ggtitle("Displaying all embayments within this category")
-          ggplotly(u)
-        }
-        else{
-          u <-ggplot(marsh_category_per_rem,aes(x = Year, y = MarshAcreage, text = marsh_category_per_rem$`EMBAYMENT NAME`))+
-            geom_line(aes(group=`EMBAYMENT NAME`, color = `EMBAYMENT NAME`))+
-            geom_point()+
-            scale_x_continuous(breaks = seq(1760, 2020, by = 20))+
-            theme(legend.position="none")+
-            ylab("Acres")+
-            ggtitle("Displaying all embayments within this category")
-          ggplotly(u)
-        }
-      }
-    }
-  }) 
-  
-  ############## Northeastern Category: Salt Marsh data profiles #################    
-  
-  output$category_flats_profile <- renderPlotly({
-    if(input$plot_tabs=="Northeastern Category"){
-      if(input$category!=""){
-        selected_flats_category <- subset(Tidy_Flats_Data,Tidy_Flats_Data$Northeastern_category==input$category)
-        validate(
-          need(selected_flats_category$FlatsAcreage!="", "NO TIDAL FLAT DATA AVAILABLE")
-        )
-        selected_flats_category$Year <- as.numeric(as.character(selected_flats_category$Year))
-        flats_category_per_rem<-selected_flats_category %>%
-          group_by(`EMBAYMENT NAME`) %>%
-          select(FlatsAcreage, Year, `EMBAYMENT NAME`) %>%
-          mutate(percent_remaining = (FlatsAcreage/(FlatsAcreage[nrow=1]))*100)
-        if(input$data_category_flats_displayed=="Percent Remaining"){
-          t <-ggplot(flats_category_per_rem,aes(x = Year, y = percent_remaining, text = flats_category_per_rem$`EMBAYMENT NAME`))+
-            geom_line(aes(group=`EMBAYMENT NAME`, color = `EMBAYMENT NAME`))+
-            geom_point()+
-            scale_y_log10()+
-            scale_x_continuous(breaks = seq(1760, 2020, by = 20))+
-            theme(legend.position="none")+
-            ylab("Percent Remaining")+
-            ggtitle("Displaying all embayments within this category")
-          ggplotly(t)
-        }
-        else{
-          t <-ggplot(flats_category_per_rem,aes(x = Year, y = FlatsAcreage, text = flats_category_per_rem$`EMBAYMENT NAME`))+
-            geom_line(aes(group=`EMBAYMENT NAME`, color = `EMBAYMENT NAME`))+
-            geom_point()+
-            scale_x_continuous(breaks = seq(1760, 2020, by = 20))+
-            theme(legend.position="none")+
-            ylab("Acres")+
-            ggtitle("Displaying all embayments within this category")
-          ggplotly(t)
-        }
-      }
-    }
-  })
-  
+  # ############ Northeastern Category: Totals data profiles ###################
+  # 
+  # output$category_totals_profile <- renderPlotly({
+  #   if(input$plot_tabs=="Northeastern Category"){
+  #     if(input$category_data_tabs=="Totals"){
+  #       if(input$category!=""){
+  #         ###Seagrass###
+  #         selected_category_seagrass <- subset(Tidy_Seagrass_Data,Tidy_Seagrass_Data$Northeastern_category==input$category)
+  #         validate(
+  #           need(selected_category_seagrass$SeagrassAcreage!="", "NO SEAGRASS DATA AVAILABLE")
+  #         )
+  #         selected_category_seagrass <- aggregate(selected_category_seagrass$SeagrassAcreage, by=list(Category=selected_category_seagrass$Year), FUN=sum)
+  #         colnames(selected_category_seagrass)[colnames(selected_category_seagrass) == "Category"] <- "Year"
+  #         colnames(selected_category_seagrass)[colnames(selected_category_seagrass) == "x"] <- "TotalAcreage"
+  #         for(i in 1:nrow(selected_category_seagrass)) {
+  #           selected_category_seagrass$percent_remaining[i]<-(((selected_category_seagrass$TotalAcreage)[i])/((selected_category_seagrass$TotalAcreage)[1])*100)
+  #         }
+  #         selected_category_seagrass$Year <- as.numeric(as.character(selected_category_seagrass$Year))
+  #         selected_category_seagrass$Habitat<-(NA)
+  #         for(i in 1:nrow(selected_category_seagrass)) {
+  #           selected_category_seagrass$Habitat[i]<-("Seagrass")
+  #         }
+  #         ###Salt Marsh###
+  #         selected_category_marsh <- subset(Tidy_Marsh_Data,Tidy_Marsh_Data$Northeastern_category==input$category)
+  #         validate(
+  #           need(selected_category_marsh$MarshAcreage!="", "NO marsh DATA AVAILABLE")
+  #         )
+  #         selected_category_marsh <- aggregate(selected_category_marsh$MarshAcreage, by=list(Category=selected_category_marsh$Year), FUN=sum)
+  #         colnames(selected_category_marsh)[colnames(selected_category_marsh) == "Category"] <- "Year"
+  #         colnames(selected_category_marsh)[colnames(selected_category_marsh) == "x"] <- "TotalAcreage"
+  #         for(i in 1:nrow(selected_category_marsh)) {
+  #           selected_category_marsh$percent_remaining[i]<-(((selected_category_marsh$TotalAcreage)[i])/((selected_category_marsh$TotalAcreage)[1])*100)
+  #         }
+  #         selected_category_marsh$Year <- as.numeric(as.character(selected_category_marsh$Year))
+  #         selected_category_marsh$Habitat<-(NA)
+  #         for(i in 1:nrow(selected_category_marsh)) {
+  #           selected_category_marsh$Habitat[i]<-("Salt Marsh")
+  #         }
+  #         ###Tidal Flats###
+  #         selected_category_flats <- subset(Tidy_Flats_Data,Tidy_Flats_Data$Northeastern_category==input$category)
+  #         validate(
+  #           need(selected_category_flats$FlatsAcreage!="", "NO flats DATA AVAILABLE")
+  #         )
+  #         selected_category_flats <- aggregate(selected_category_flats$FlatsAcreage, by=list(Category=selected_category_flats$Year), FUN=sum)
+  #         colnames(selected_category_flats)[colnames(selected_category_flats) == "Category"] <- "Year"
+  #         colnames(selected_category_flats)[colnames(selected_category_flats) == "x"] <- "TotalAcreage"
+  #         for(i in 1:nrow(selected_category_flats)) {
+  #           selected_category_flats$percent_remaining[i]<-(((selected_category_flats$TotalAcreage)[i])/((selected_category_flats$TotalAcreage)[1])*100)
+  #         }
+  #         selected_category_flats$Year <- as.numeric(as.character(selected_category_flats$Year))
+  #         selected_category_flats$Habitat<-(NA)
+  #         for(i in 1:nrow(selected_category_flats)) {
+  #           selected_category_flats$Habitat[i]<-("Tidal Flats")
+  #         }   
+  #         category_totals1 <- merge(selected_category_seagrass,selected_category_marsh, all = TRUE)
+  #         category_totals <- merge(category_totals1,selected_category_flats, all = TRUE)
+  #         
+  #         if(input$data_category_totals_displayed=="Percent Remaining"){
+  #           w <-ggplot(category_totals,aes(x = Year, y = percent_remaining, color = Habitat, 
+  #                                          text = (paste("Year: ",Year, "\n",
+  #                                                        "Percent remaining: ",percent_remaining, "\n"))
+  #                                         ))+
+  #             geom_line(aes(group=Habitat))+
+  #             geom_point()+
+  #             scale_y_log10()+
+  #             scale_x_continuous(breaks = seq(1760, 2020, by = 20))+
+  #             #theme(legend.position="none")+
+  #             ylab("Percent Remaining")
+  #           ggplotly(w, tooltip = "text") %>%
+  #             rangeslider(1760, 2040, thickness=0.01)
+  #         }
+  #         else{
+  #           w <-ggplot(category_totals,aes(x = Year, y = TotalAcreage, color = Habitat, 
+  #                                          text = (paste("Year: ",Year, "\n",
+  #                                                        "Acres: ",TotalAcreage, "\n"))
+  #           ))+
+  #             geom_line(aes(group=Habitat))+
+  #             geom_point()+
+  #             scale_x_continuous(breaks = seq(1760, 2020, by = 20))+
+  #             #theme(legend.position="none")+
+  #             ylab("Acres")
+  #           ggplotly(w, tooltip = "text") %>%
+  #             rangeslider(1760, 2040, thickness=0.01)
+  #         }
+  #       }
+  #     }
+  #   }
+  # })
+  # 
+  # ######### Northeastern Category: Seagrass data profiles #################         
+  # 
+  # output$category_seagrass_profile <- renderPlotly({
+  #   if(input$plot_tabs=="Northeastern Category"){
+  #     if(input$category!=""){
+  #       selected_seagrass_category <- subset(Tidy_Seagrass_Data,Tidy_Seagrass_Data$Northeastern_category==input$category)
+  #       validate(
+  #         need(selected_seagrass_category$SeagrassAcreage!="", "NO SEAGRASS DATA AVAILABLE")
+  #       )
+  #       selected_seagrass_category$Year <- as.numeric(as.character(selected_seagrass_category$Year))
+  #       seagrass_category_per_rem<-selected_seagrass_category %>%
+  #         group_by(`EMBAYMENT NAME`) %>%
+  #         select(SeagrassAcreage, Year, `EMBAYMENT NAME`, Northeastern_category, `MassBays Region`) %>%
+  #         mutate(percent_remaining = (SeagrassAcreage/(SeagrassAcreage[nrow=1]))*100)
+  #       if(input$data_category_seagrass_displayed=="Percent Remaining"){
+  #         v <-ggplot(seagrass_category_per_rem,aes(x = Year, y = percent_remaining, 
+  #                                                  text = (paste("Year: ",Year, "\n",
+  #                                                                "Percent Remaining: ",percent_remaining, "\n",
+  #                                                                "Embayment: ",`EMBAYMENT NAME`, "\n",
+  #                                                                "Stressor-Resource Category: ",Northeastern_category, "\n",
+  #                                                                "MassBays Region: ",`MassBays Region`))
+  #                                                 ))+
+  #           geom_line(aes(group=`EMBAYMENT NAME`, color = `EMBAYMENT NAME`))+
+  #           geom_point()+
+  #           scale_y_log10()+
+  #           scale_x_continuous(breaks = seq(1760, 2020, by = 20))+
+  #           theme(legend.position="none")+
+  #           ylab("Percent Remaining")+
+  #           ggtitle("Displaying all embayments within this category")
+  #         ggplotly(v, tooltip = "text") %>%
+  #           rangeslider(1760, 2040, thickness=0.01)
+  #       }
+  #       else{
+  #         v <-ggplot(seagrass_category_per_rem,aes(x = Year, y = SeagrassAcreage, 
+  #                                                  text = (paste("Year: ",Year, "\n",
+  #                                                                "Acres: ",SeagrassAcreage, "\n",
+  #                                                                "Embayment: ",`EMBAYMENT NAME`, "\n",
+  #                                                                "Stressor-Resource Category: ",Northeastern_category, "\n",
+  #                                                                "MassBays Region: ",`MassBays Region`))
+  #                                                 ))+
+  #           geom_line(aes(group=`EMBAYMENT NAME`, color = `EMBAYMENT NAME`))+
+  #           geom_point()+
+  #           scale_x_continuous(breaks = seq(1760, 2020, by = 20))+
+  #           theme(legend.position="none")+
+  #           ylab("Acres")+
+  #           ggtitle("Displaying all embayments within this category")
+  #         ggplotly(v, tooltip = "text") %>%
+  #           rangeslider(1760, 2040, thickness=0.01)
+  #       }
+  #     }
+  #   }
+  # })
+  # 
+  # ############# Northeastern Category: Salt Marsh data profiles #################       
+  # 
+  # output$category_marsh_profile <- renderPlotly({
+  #   if(input$plot_tabs=="Northeastern Category"){
+  #     if(input$category!=""){
+  #       selected_marsh_category <- subset(Tidy_Marsh_Data,Tidy_Marsh_Data$Northeastern_category==input$category)
+  #       validate(
+  #         need(selected_marsh_category$MarshAcreage!="", "NO SALT MARSH DATA AVAILABLE")
+  #       )
+  #       selected_marsh_category$Year <- as.numeric(as.character(selected_marsh_category$Year))
+  #       marsh_category_per_rem<-selected_marsh_category %>%
+  #         group_by(`EMBAYMENT NAME`) %>%
+  #         select(MarshAcreage, Year, `EMBAYMENT NAME`, Northeastern_category, `MassBays Region`) %>%
+  #         mutate(percent_remaining = (MarshAcreage/(MarshAcreage[nrow=1]))*100)
+  #       if(input$data_category_marsh_displayed=="Percent Remaining"){
+  #         u <-ggplot(marsh_category_per_rem,aes(x = Year, y = percent_remaining, 
+  #                                               text = (paste("Year: ",Year, "\n",
+  #                                                             "Percent Remaining: ",percent_remaining, "\n",
+  #                                                             "Embayment: ",`EMBAYMENT NAME`, "\n",
+  #                                                             "Stressor-Resource Category: ",Northeastern_category, "\n",
+  #                                                             "MassBays Region: ",`MassBays Region`))
+  #                                               ))+
+  #           geom_line(aes(group=`EMBAYMENT NAME`, color = `EMBAYMENT NAME`))+
+  #           geom_point()+
+  #           scale_y_log10()+
+  #           scale_x_continuous(breaks = seq(1760, 2020, by = 20))+
+  #           theme(legend.position="none")+
+  #           ylab("Percent Remaining")+
+  #           ggtitle("Displaying all embayments within this category")
+  #         ggplotly(u, tooltip = "text") %>%
+  #           rangeslider(1760, 2040, thickness=0.01)
+  #       }
+  #       else{
+  #         u <-ggplot(marsh_category_per_rem,aes(x = Year, y = MarshAcreage, 
+  #                                               text = (paste("Year: ",Year, "\n",
+  #                                                             "Acres: ",MarshAcreage, "\n",
+  #                                                             "Embayment: ",`EMBAYMENT NAME`, "\n",
+  #                                                             "Stressor-Resource Category: ",Northeastern_category, "\n",
+  #                                                             "MassBays Region: ",`MassBays Region`))
+  #                                               ))+
+  #           geom_line(aes(group=`EMBAYMENT NAME`, color = `EMBAYMENT NAME`))+
+  #           geom_point()+
+  #           scale_x_continuous(breaks = seq(1760, 2020, by = 20))+
+  #           theme(legend.position="none")+
+  #           ylab("Acres")+
+  #           ggtitle("Displaying all embayments within this category")
+  #         ggplotly(u, tooltip = "text") %>%
+  #           rangeslider(1760, 2040, thickness=0.01)
+  #       }
+  #     }
+  #   }
+  # }) 
+  # 
+  # ############## Northeastern Category: Salt Marsh data profiles #################    
+  # 
+  # output$category_flats_profile <- renderPlotly({
+  #   if(input$plot_tabs=="Northeastern Category"){
+  #     if(input$category!=""){
+  #       selected_flats_category <- subset(Tidy_Flats_Data,Tidy_Flats_Data$Northeastern_category==input$category)
+  #       validate(
+  #         need(selected_flats_category$FlatsAcreage!="", "NO TIDAL FLAT DATA AVAILABLE")
+  #       )
+  #       selected_flats_category$Year <- as.numeric(as.character(selected_flats_category$Year))
+  #       flats_category_per_rem<-selected_flats_category %>%
+  #         group_by(`EMBAYMENT NAME`) %>%
+  #         select(FlatsAcreage, Year, `EMBAYMENT NAME`, Northeastern_category, `MassBays Region`) %>%
+  #         mutate(percent_remaining = (FlatsAcreage/(FlatsAcreage[nrow=1]))*100)
+  #       if(input$data_category_flats_displayed=="Percent Remaining"){
+  #         t <-ggplot(flats_category_per_rem,aes(x = Year, y = percent_remaining, 
+  #                                               text = (paste("Year: ",Year, "\n",
+  #                                                             "Percent Remaining: ",percent_remaining, "\n",
+  #                                                             "Embayment: ",`EMBAYMENT NAME`, "\n",
+  #                                                             "Stressor-Resource Category: ",Northeastern_category, "\n",
+  #                                                             "MassBays Region: ",`MassBays Region`))
+  #                                               ))+
+  #           geom_line(aes(group=`EMBAYMENT NAME`, color = `EMBAYMENT NAME`))+
+  #           geom_point()+
+  #           scale_y_log10()+
+  #           scale_x_continuous(breaks = seq(1760, 2020, by = 20))+
+  #           theme(legend.position="none")+
+  #           ylab("Percent Remaining")+
+  #           ggtitle("Displaying all embayments within this category")
+  #         ggplotly(t, tooltip = "text") %>%
+  #           rangeslider(1760, 2040, thickness=0.01)
+  #       }
+  #       else{
+  #         t <-ggplot(flats_category_per_rem,aes(x = Year, y = FlatsAcreage, 
+  #                                               text = (paste("Year: ",Year, "\n",
+  #                                                             "Acres: ",FlatsAcreage, "\n",
+  #                                                             "Embayment: ",`EMBAYMENT NAME`, "\n",
+  #                                                             "Stressor-Resource Category: ",Northeastern_category, "\n",
+  #                                                             "MassBays Region: ",`MassBays Region`))
+  #         ))+
+  #           geom_line(aes(group=`EMBAYMENT NAME`, color = `EMBAYMENT NAME`))+
+  #           geom_point()+
+  #           scale_x_continuous(breaks = seq(1760, 2020, by = 20))+
+  #           theme(legend.position="none")+
+  #           ylab("Acres")+
+  #           ggtitle("Displaying all embayments within this category")
+  #         ggplotly(t, tooltip = "text") %>%
+  #           rangeslider(1760, 2040, thickness=0.01)
+  #       }
+  #     }
+  #   }
+  # })
+  # 
   ################################################################################   
   ############ Generate MassBays Regions data profiles and tables ################
   
   ############ Generate MassBays Regions: Totals data profiles ###################
   
-  output$region_totals_profile <- renderPlotly({
-    if(input$plot_tabs=="MassBays Region"){
-      if(input$region_data_tabs=="Totals"){
-        if(input$region!=""){
-          ###Seagrass###
-          selected_region_seagrass <- subset(Tidy_Seagrass_Data,Tidy_Seagrass_Data$`MassBays Region`==input$region)
-          validate(
-            need(selected_region_seagrass$SeagrassAcreage!="", "NO SEAGRASS DATA AVAILABLE")
-          )
-          selected_region_seagrass <- aggregate(selected_region_seagrass$SeagrassAcreage, by=list(Category=selected_region_seagrass$Year), FUN=sum)
-          colnames(selected_region_seagrass)[colnames(selected_region_seagrass) == "Category"] <- "Year"
-          colnames(selected_region_seagrass)[colnames(selected_region_seagrass) == "x"] <- "TotalAcreage"
-          for(i in 1:nrow(selected_region_seagrass)) {
-            selected_region_seagrass$percent_remaining[i]<-(((selected_region_seagrass$TotalAcreage)[i])/((selected_region_seagrass$TotalAcreage)[1])*100)
-          }
-          selected_region_seagrass$Year <- as.numeric(as.character(selected_region_seagrass$Year))
-          selected_region_seagrass$Habitat<-(NA)
-          for(i in 1:nrow(selected_region_seagrass)) {
-            selected_region_seagrass$Habitat[i]<-("Seagrass")
-          }
-          ###Salt Marsh###
-          selected_region_marsh <- subset(Tidy_Marsh_Data,Tidy_Marsh_Data$`MassBays Region`==input$region)
-          validate(
-            need(selected_region_marsh$MarshAcreage!="", "NO marsh DATA AVAILABLE")
-          )
-          selected_region_marsh <- aggregate(selected_region_marsh$MarshAcreage, by=list(Category=selected_region_marsh$Year), FUN=sum)
-          colnames(selected_region_marsh)[colnames(selected_region_marsh) == "Category"] <- "Year"
-          colnames(selected_region_marsh)[colnames(selected_region_marsh) == "x"] <- "TotalAcreage"
-          for(i in 1:nrow(selected_region_marsh)) {
-            selected_region_marsh$percent_remaining[i]<-(((selected_region_marsh$TotalAcreage)[i])/((selected_region_marsh$TotalAcreage)[1])*100)
-          }
-          selected_region_marsh$Year <- as.numeric(as.character(selected_region_marsh$Year))
-          selected_region_marsh$Habitat<-(NA)
-          for(i in 1:nrow(selected_region_marsh)) {
-            selected_region_marsh$Habitat[i]<-("Salt Marsh")
-          }
-          ###Tidal Flats###
-          selected_region_flats <- subset(Tidy_Flats_Data,Tidy_Flats_Data$`MassBays Region`==input$region)
-          validate(
-            need(selected_region_flats$FlatsAcreage!="", "NO flats DATA AVAILABLE")
-          )
-          selected_region_flats <- aggregate(selected_region_flats$FlatsAcreage, by=list(Category=selected_region_flats$Year), FUN=sum)
-          colnames(selected_region_flats)[colnames(selected_region_flats) == "Category"] <- "Year"
-          colnames(selected_region_flats)[colnames(selected_region_flats) == "x"] <- "TotalAcreage"
-          for(i in 1:nrow(selected_region_flats)) {
-            selected_region_flats$percent_remaining[i]<-(((selected_region_flats$TotalAcreage)[i])/((selected_region_flats$TotalAcreage)[1])*100)
-          }
-          selected_region_flats$Year <- as.numeric(as.character(selected_region_flats$Year))
-          selected_region_flats$Habitat<-(NA)
-          for(i in 1:nrow(selected_region_flats)) {
-            selected_region_flats$Habitat[i]<-("Tidal Flats")
-          }   
-          region_totals1 <- merge(selected_region_seagrass,selected_region_marsh, all = TRUE)
-          region_totals <- merge(region_totals1,selected_region_flats, all = TRUE)
-          
-          if(input$data_region_totals_displayed=="Percent Remaining"){
-            s <-ggplot(region_totals,aes(x = Year, y = percent_remaining, color = Habitat))+
-              geom_line(aes(group=Habitat))+
-              geom_point()+
-              scale_y_log10()+
-              scale_x_continuous(breaks = seq(1760, 2020, by = 20))+
-              #theme(legend.position="none")+
-              ylab("Percent Remaining")
-            ggplotly(s)
-          }
-          else{
-            s <-ggplot(region_totals,aes(x = Year, y = TotalAcreage, color = Habitat))+
-              geom_line(aes(group=Habitat))+
-              geom_point()+
-              scale_x_continuous(breaks = seq(1760, 2020, by = 20))+
-              #theme(legend.position="none")+
-              ylab("Acres")
-            ggplotly(s)
-          }
-        }
-      }
-    }
-  })
-  
-  ######### MassBays Region: Seagrass data profiles #################         
-  
-  output$region_seagrass_profile <- renderPlotly({
-    if(input$plot_tabs=="MassBays Region"){
-      if(input$region!=""){
-        selected_seagrass_region <- subset(Tidy_Seagrass_Data,Tidy_Seagrass_Data$`MassBays Region`==input$region)
-        validate(
-          need(selected_seagrass_region$SeagrassAcreage!="", "NO SEAGRASS DATA AVAILABLE")
-        )
-        selected_seagrass_region$Year <- as.numeric(as.character(selected_seagrass_region$Year))
-        seagrass_region_per_rem<-selected_seagrass_region %>%
-          group_by(`EMBAYMENT NAME`) %>%
-          select(SeagrassAcreage, Year, `EMBAYMENT NAME`) %>%
-          mutate(percent_remaining = (SeagrassAcreage/(SeagrassAcreage[nrow=1]))*100)
-        if(input$data_region_seagrass_displayed=="Percent Remaining"){
-          r <-ggplot(seagrass_region_per_rem,aes(x = Year, y = percent_remaining, text = seagrass_region_per_rem$`EMBAYMENT NAME`))+
-            geom_line(aes(group=`EMBAYMENT NAME`, color = `EMBAYMENT NAME`))+
-            geom_point()+
-            scale_y_log10()+
-            scale_x_continuous(breaks = seq(1760, 2020, by = 20))+
-            theme(legend.position="none")+
-            ylab("Percent Remaining")+
-            ggtitle("Displaying all embayments within this region")
-          ggplotly(r)
-        }
-        else{
-          r <-ggplot(seagrass_region_per_rem,aes(x = Year, y = SeagrassAcreage, text = seagrass_region_per_rem$`EMBAYMENT NAME`))+
-            geom_line(aes(group=`EMBAYMENT NAME`, color = `EMBAYMENT NAME`))+
-            geom_point()+
-            scale_x_continuous(breaks = seq(1760, 2020, by = 20))+
-            theme(legend.position="none")+
-            ylab("Acres")+
-            ggtitle("Displaying all embayments within this region")
-          ggplotly(r)
-        }
-      }
-    }
-  })
-  
-  ############# MassBays Region: Salt Marsh data profiles #################       
-  
-  output$region_marsh_profile <- renderPlotly({
-    if(input$plot_tabs=="MassBays Region"){
-      if(input$region!=""){
-        selected_marsh_region <- subset(Tidy_Marsh_Data,Tidy_Marsh_Data$`MassBays Region`==input$region)
-        validate(
-          need(selected_marsh_region$MarshAcreage!="", "NO SALT MARSH DATA AVAILABLE")
-        )
-        selected_marsh_region$Year <- as.numeric(as.character(selected_marsh_region$Year))
-        marsh_region_per_rem<-selected_marsh_region %>%
-          group_by(`EMBAYMENT NAME`) %>%
-          select(MarshAcreage, Year, `EMBAYMENT NAME`) %>%
-          mutate(percent_remaining = (MarshAcreage/(MarshAcreage[nrow=1]))*100)
-        if(input$data_region_marsh_displayed=="Percent Remaining"){
-          q <-ggplot(marsh_region_per_rem,aes(x = Year, y = percent_remaining, text = marsh_region_per_rem$`EMBAYMENT NAME`))+
-            geom_line(aes(group=`EMBAYMENT NAME`, color = `EMBAYMENT NAME`))+
-            geom_point()+
-            scale_y_log10()+
-            scale_x_continuous(breaks = seq(1760, 2020, by = 20))+
-            theme(legend.position="none")+
-            ylab("Percent Remaining")+
-            ggtitle("Displaying all embayments within this region")
-          ggplotly(q)
-        }
-        else{
-          q <-ggplot(marsh_region_per_rem,aes(x = Year, y = MarshAcreage, text = marsh_region_per_rem$`EMBAYMENT NAME`))+
-            geom_line(aes(group=`EMBAYMENT NAME`, color = `EMBAYMENT NAME`))+
-            geom_point()+
-            scale_x_continuous(breaks = seq(1760, 2020, by = 20))+
-            theme(legend.position="none")+
-            ylab("Acres")+
-            ggtitle("Displaying all embayments within this region")
-          ggplotly(q)
-        }
-      }
-    }
-  }) 
-  
-  ############## MassBays Region: Tidal FLats data profiles #################    
-  
-  output$region_flats_profile <- renderPlotly({
-    if(input$plot_tabs=="MassBays Region"){
-      if(input$region!=""){
-        selected_flats_region <- subset(Tidy_Flats_Data,Tidy_Flats_Data$`MassBays Region`==input$region)
-        validate(
-          need(selected_flats_region$FlatsAcreage!="", "NO TIDAL FLAT DATA AVAILABLE")
-        )
-        selected_flats_region$Year <- as.numeric(as.character(selected_flats_region$Year))
-        flats_region_per_rem<-selected_flats_region %>%
-          group_by(`EMBAYMENT NAME`) %>%
-          select(FlatsAcreage, Year, `EMBAYMENT NAME`) %>%
-          mutate(percent_remaining = (FlatsAcreage/(FlatsAcreage[nrow=1]))*100)
-        if(input$data_region_flats_displayed=="Percent Remaining"){
-          p <- ggplot(flats_region_per_rem,aes(x = Year, y = percent_remaining, text = flats_region_per_rem$`EMBAYMENT NAME`))+
-            geom_line(aes(group=`EMBAYMENT NAME`, color = `EMBAYMENT NAME`))+
-            geom_point()+
-            scale_y_log10()+
-            scale_x_continuous(breaks = seq(1760, 2020, by = 20))+
-            theme(legend.position="none")+
-            ylab("Percent Remaining")+
-            ggtitle("Displaying all embayments within this region")
-          ggplotly(p)
-        }
-        else{
-          p <- ggplot(flats_region_per_rem,aes(x = Year, y = FlatsAcreage, text = flats_region_per_rem$`EMBAYMENT NAME`))+
-            geom_line(aes(group=`EMBAYMENT NAME`, color = `EMBAYMENT NAME`))+
-            geom_point()+
-            scale_x_continuous(breaks = seq(1760, 2020, by = 20))+
-            theme(legend.position="none")+
-            ylab("Acres")+
-            ggtitle("Displaying all embayments within this region")
-          ggplotly(p)
-        }
-      }
-    }
-  }) 
+  # output$region_totals_profile <- renderPlotly({
+  #   if(input$plot_tabs=="MassBays Region"){
+  #     if(input$region_data_tabs=="Totals"){
+  #       if(input$region!=""){
+  #         ###Seagrass###
+  #         selected_region_seagrass <- subset(Tidy_Seagrass_Data,Tidy_Seagrass_Data$`MassBays Region`==input$region)
+  #         validate(
+  #           need(selected_region_seagrass$SeagrassAcreage!="", "NO SEAGRASS DATA AVAILABLE")
+  #         )
+  #         selected_region_seagrass <- aggregate(selected_region_seagrass$SeagrassAcreage, by=list(Category=selected_region_seagrass$Year), FUN=sum)
+  #         colnames(selected_region_seagrass)[colnames(selected_region_seagrass) == "Category"] <- "Year"
+  #         colnames(selected_region_seagrass)[colnames(selected_region_seagrass) == "x"] <- "TotalAcreage"
+  #         for(i in 1:nrow(selected_region_seagrass)) {
+  #           selected_region_seagrass$percent_remaining[i]<-(((selected_region_seagrass$TotalAcreage)[i])/((selected_region_seagrass$TotalAcreage)[1])*100)
+  #         }
+  #         selected_region_seagrass$Year <- as.numeric(as.character(selected_region_seagrass$Year))
+  #         selected_region_seagrass$Habitat<-(NA)
+  #         for(i in 1:nrow(selected_region_seagrass)) {
+  #           selected_region_seagrass$Habitat[i]<-("Seagrass")
+  #         }
+  #         ###Salt Marsh###
+  #         selected_region_marsh <- subset(Tidy_Marsh_Data,Tidy_Marsh_Data$`MassBays Region`==input$region)
+  #         validate(
+  #           need(selected_region_marsh$MarshAcreage!="", "NO marsh DATA AVAILABLE")
+  #         )
+  #         selected_region_marsh <- aggregate(selected_region_marsh$MarshAcreage, by=list(Category=selected_region_marsh$Year), FUN=sum)
+  #         colnames(selected_region_marsh)[colnames(selected_region_marsh) == "Category"] <- "Year"
+  #         colnames(selected_region_marsh)[colnames(selected_region_marsh) == "x"] <- "TotalAcreage"
+  #         for(i in 1:nrow(selected_region_marsh)) {
+  #           selected_region_marsh$percent_remaining[i]<-(((selected_region_marsh$TotalAcreage)[i])/((selected_region_marsh$TotalAcreage)[1])*100)
+  #         }
+  #         selected_region_marsh$Year <- as.numeric(as.character(selected_region_marsh$Year))
+  #         selected_region_marsh$Habitat<-(NA)
+  #         for(i in 1:nrow(selected_region_marsh)) {
+  #           selected_region_marsh$Habitat[i]<-("Salt Marsh")
+  #         }
+  #         ###Tidal Flats###
+  #         selected_region_flats <- subset(Tidy_Flats_Data,Tidy_Flats_Data$`MassBays Region`==input$region)
+  #         validate(
+  #           need(selected_region_flats$FlatsAcreage!="", "NO flats DATA AVAILABLE")
+  #         )
+  #         selected_region_flats <- aggregate(selected_region_flats$FlatsAcreage, by=list(Category=selected_region_flats$Year), FUN=sum)
+  #         colnames(selected_region_flats)[colnames(selected_region_flats) == "Category"] <- "Year"
+  #         colnames(selected_region_flats)[colnames(selected_region_flats) == "x"] <- "TotalAcreage"
+  #         for(i in 1:nrow(selected_region_flats)) {
+  #           selected_region_flats$percent_remaining[i]<-(((selected_region_flats$TotalAcreage)[i])/((selected_region_flats$TotalAcreage)[1])*100)
+  #         }
+  #         selected_region_flats$Year <- as.numeric(as.character(selected_region_flats$Year))
+  #         selected_region_flats$Habitat<-(NA)
+  #         for(i in 1:nrow(selected_region_flats)) {
+  #           selected_region_flats$Habitat[i]<-("Tidal Flats")
+  #         }   
+  #         region_totals1 <- merge(selected_region_seagrass,selected_region_marsh, all = TRUE)
+  #         region_totals <- merge(region_totals1,selected_region_flats, all = TRUE)
+  #         
+  #         if(input$data_region_totals_displayed=="Percent Remaining"){
+  #           s <-ggplot(region_totals,aes(x = Year, y = percent_remaining, color = Habitat))+
+  #             geom_line(aes(group=Habitat))+
+  #             geom_point()+
+  #             scale_y_log10()+
+  #             scale_x_continuous(breaks = seq(1760, 2020, by = 20))+
+  #             #theme(legend.position="none")+
+  #             ylab("Percent Remaining")
+  #           ggplotly(s)
+  #         }
+  #         else{
+  #           s <-ggplot(region_totals,aes(x = Year, y = TotalAcreage, color = Habitat))+
+  #             geom_line(aes(group=Habitat))+
+  #             geom_point()+
+  #             scale_x_continuous(breaks = seq(1760, 2020, by = 20))+
+  #             #theme(legend.position="none")+
+  #             ylab("Acres")
+  #           ggplotly(s)
+  #         }
+  #       }
+  #     }
+  #   }
+  # })
+  # 
+  # ######### MassBays Region: Seagrass data profiles #################         
+  # 
+  # output$region_seagrass_profile <- renderPlotly({
+  #   if(input$plot_tabs=="MassBays Region"){
+  #     if(input$region!=""){
+  #       selected_seagrass_region <- subset(Tidy_Seagrass_Data,Tidy_Seagrass_Data$`MassBays Region`==input$region)
+  #       validate(
+  #         need(selected_seagrass_region$SeagrassAcreage!="", "NO SEAGRASS DATA AVAILABLE")
+  #       )
+  #       selected_seagrass_region$Year <- as.numeric(as.character(selected_seagrass_region$Year))
+  #       seagrass_region_per_rem<-selected_seagrass_region %>%
+  #         group_by(`EMBAYMENT NAME`) %>%
+  #         select(SeagrassAcreage, Year, `EMBAYMENT NAME`) %>%
+  #         mutate(percent_remaining = (SeagrassAcreage/(SeagrassAcreage[nrow=1]))*100)
+  #       if(input$data_region_seagrass_displayed=="Percent Remaining"){
+  #         r <-ggplot(seagrass_region_per_rem,aes(x = Year, y = percent_remaining, text = seagrass_region_per_rem$`EMBAYMENT NAME`))+
+  #           geom_line(aes(group=`EMBAYMENT NAME`, color = `EMBAYMENT NAME`))+
+  #           geom_point()+
+  #           scale_y_log10()+
+  #           scale_x_continuous(breaks = seq(1760, 2020, by = 20))+
+  #           theme(legend.position="none")+
+  #           ylab("Percent Remaining")+
+  #           ggtitle("Displaying all embayments within this region")
+  #         ggplotly(r)
+  #       }
+  #       else{
+  #         r <-ggplot(seagrass_region_per_rem,aes(x = Year, y = SeagrassAcreage, text = seagrass_region_per_rem$`EMBAYMENT NAME`))+
+  #           geom_line(aes(group=`EMBAYMENT NAME`, color = `EMBAYMENT NAME`))+
+  #           geom_point()+
+  #           scale_x_continuous(breaks = seq(1760, 2020, by = 20))+
+  #           theme(legend.position="none")+
+  #           ylab("Acres")+
+  #           ggtitle("Displaying all embayments within this region")
+  #         ggplotly(r)
+  #       }
+  #     }
+  #   }
+  # })
+  # 
+  # ############# MassBays Region: Salt Marsh data profiles #################       
+  # 
+  # output$region_marsh_profile <- renderPlotly({
+  #   if(input$plot_tabs=="MassBays Region"){
+  #     if(input$region!=""){
+  #       selected_marsh_region <- subset(Tidy_Marsh_Data,Tidy_Marsh_Data$`MassBays Region`==input$region)
+  #       validate(
+  #         need(selected_marsh_region$MarshAcreage!="", "NO SALT MARSH DATA AVAILABLE")
+  #       )
+  #       selected_marsh_region$Year <- as.numeric(as.character(selected_marsh_region$Year))
+  #       marsh_region_per_rem<-selected_marsh_region %>%
+  #         group_by(`EMBAYMENT NAME`) %>%
+  #         select(MarshAcreage, Year, `EMBAYMENT NAME`) %>%
+  #         mutate(percent_remaining = (MarshAcreage/(MarshAcreage[nrow=1]))*100)
+  #       if(input$data_region_marsh_displayed=="Percent Remaining"){
+  #         q <-ggplot(marsh_region_per_rem,aes(x = Year, y = percent_remaining, text = marsh_region_per_rem$`EMBAYMENT NAME`))+
+  #           geom_line(aes(group=`EMBAYMENT NAME`, color = `EMBAYMENT NAME`))+
+  #           geom_point()+
+  #           scale_y_log10()+
+  #           scale_x_continuous(breaks = seq(1760, 2020, by = 20))+
+  #           theme(legend.position="none")+
+  #           ylab("Percent Remaining")+
+  #           ggtitle("Displaying all embayments within this region")
+  #         ggplotly(q)
+  #       }
+  #       else{
+  #         q <-ggplot(marsh_region_per_rem,aes(x = Year, y = MarshAcreage, text = marsh_region_per_rem$`EMBAYMENT NAME`))+
+  #           geom_line(aes(group=`EMBAYMENT NAME`, color = `EMBAYMENT NAME`))+
+  #           geom_point()+
+  #           scale_x_continuous(breaks = seq(1760, 2020, by = 20))+
+  #           theme(legend.position="none")+
+  #           ylab("Acres")+
+  #           ggtitle("Displaying all embayments within this region")
+  #         ggplotly(q)
+  #       }
+  #     }
+  #   }
+  # }) 
+  # 
+  # ############## MassBays Region: Tidal FLats data profiles #################    
+  # 
+  # output$region_flats_profile <- renderPlotly({
+  #   if(input$plot_tabs=="MassBays Region"){
+  #     if(input$region!=""){
+  #       selected_flats_region <- subset(Tidy_Flats_Data,Tidy_Flats_Data$`MassBays Region`==input$region)
+  #       validate(
+  #         need(selected_flats_region$FlatsAcreage!="", "NO TIDAL FLAT DATA AVAILABLE")
+  #       )
+  #       selected_flats_region$Year <- as.numeric(as.character(selected_flats_region$Year))
+  #       flats_region_per_rem<-selected_flats_region %>%
+  #         group_by(`EMBAYMENT NAME`) %>%
+  #         select(FlatsAcreage, Year, `EMBAYMENT NAME`) %>%
+  #         mutate(percent_remaining = (FlatsAcreage/(FlatsAcreage[nrow=1]))*100)
+  #       if(input$data_region_flats_displayed=="Percent Remaining"){
+  #         p <- ggplot(flats_region_per_rem,aes(x = Year, y = percent_remaining, text = flats_region_per_rem$`EMBAYMENT NAME`))+
+  #           geom_line(aes(group=`EMBAYMENT NAME`, color = `EMBAYMENT NAME`))+
+  #           geom_point()+
+  #           scale_y_log10()+
+  #           scale_x_continuous(breaks = seq(1760, 2020, by = 20))+
+  #           theme(legend.position="none")+
+  #           ylab("Percent Remaining")+
+  #           ggtitle("Displaying all embayments within this region")
+  #         ggplotly(p)
+  #       }
+  #       else{
+  #         p <- ggplot(flats_region_per_rem,aes(x = Year, y = FlatsAcreage, text = flats_region_per_rem$`EMBAYMENT NAME`))+
+  #           geom_line(aes(group=`EMBAYMENT NAME`, color = `EMBAYMENT NAME`))+
+  #           geom_point()+
+  #           scale_x_continuous(breaks = seq(1760, 2020, by = 20))+
+  #           theme(legend.position="none")+
+  #           ylab("Acres")+
+  #           ggtitle("Displaying all embayments within this region")
+  #         ggplotly(p)
+  #       }
+  #     }
+  #   }
+  # }) 
 }
 
 shinyApp(ui, server)
