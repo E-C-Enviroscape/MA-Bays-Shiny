@@ -147,12 +147,12 @@ ui <- fluidPage(
       br(),
       h1("MassBays Data Visualization Application", align = "center"),
       br(),
-      h4("Add Description of Application here", align = "center")
+      h4("This is a data exploration tool meant to display and compare embayment-level information about habitats and stressors throughout MassBays. ", align = "center")
     )
   ),
   headerPanel(
     fluidRow(
-      h5("Add Map Description here", align = "center")
+      h5("Estuarine embayments delineated in the EDA 2.0 by Geosyntec. As data selections are made below, the map will highlight relevant embayment(s).", align = "center")
     )
   ),
   fluidRow(
@@ -182,6 +182,7 @@ ui <- fluidPage(
                                                                    tabPanel("Seagrass",
                                                                             sidebarPanel(radioButtons("data_ecotype_seagrass_displayed","Choose data option", data_displayed)),
                                                                             mainPanel(plotlyOutput("ecotype_seagrass_profile", height = "700px"))
+                                                                            #verbatimTextOutput("hoverData")
                                                                    ),
                                                                    tabPanel("Salt Marsh",
                                                                             sidebarPanel(radioButtons("data_ecotype_marsh_displayed","Choose data option", data_displayed)),
@@ -211,14 +212,38 @@ ui <- fluidPage(
                                                        selectInput("category", label = "Northeastern Category", choices = category_choices)
                                        )),
                                        fluidRow(column(12,
-                                                       tabsetPanel(id = "category_data_tabs",
-                                                                   tabPanel("Driving Stressors",
-                                                                            plotlyOutput("driving_stressor_profile", height = "700px")
-                                                                   ),
-                                                                   tabPanel("Other Stressors",
-                                                                          plotlyOutput("other_stressor_profile", height = "700px")
-                                                                   )
+                                                       tabsetPanel("main_category_tabs",
+                                                                   tabPanel("About",
+                                                                                headerPanel(#column(4,
+                                                                                  "Stressor-Resource Categories are clusters of embayments with similar present-day stressor and resource levels.
+                                                                                  Northeastern University conducted a Principal Component Analysis which grouped the 39 embayments into four 
+                                                                                  clusters based on analysis of combined stressor and resource data. Red arrows generally reflect the magnitude 
+                                                                                  of each variable’s contribution to the determination of clusters. See table below for embayment IDs and cluster assignments"
+                                                                                  #),
+                                                                                  #column(8,
+                                                                                   #img(height = '100px', width = '300px', src = "massbays_pca_plot.png"))
+                                                                                )
+                                                                            ),
+                                                                   tabPanel("Stressors",
+                                                                            tabsetPanel(id = "category_data_tabs",
+                                                                                        tabPanel("Driving Stressors",
+                                                                                                 plotlyOutput("driving_stressor_profile", height = "700px")
+                                                                                        ),
+                                                                                        tabPanel("Other Stressors",
+                                                                                                 plotlyOutput("other_stressor_profile", height = "700px")
+                                                                                        )
+                                                                            )
+                                                                  )
+                                                         
                                                        )
+                                                       # tabsetPanel(id = "category_data_tabs",
+                                                       #             tabPanel("Driving Stressors",
+                                                       #                      plotlyOutput("driving_stressor_profile", height = "700px")
+                                                       #             ),
+                                                       #             tabPanel("Other Stressors",
+                                                       #                    plotlyOutput("other_stressor_profile", height = "700px")
+                                                       #             )
+                                                       # )
                                        ))
                                        # fluidRow(column(12,
                                        #                 tabsetPanel(id = "category_data_tabs",
@@ -361,7 +386,7 @@ server <- function(input, output, session) {
       map_proxy %>% leaflet::addPolygons(data=selected_ecotype_polygon, weight = 2, color = "red", group = "highlighted_polygon")
     }
   })
-  
+
   ######### Change map to show selected MassBays Regions polygons ###########
   map_proxy=leaflet::leafletProxy("mymap")
   observeEvent(input$region,{
@@ -695,7 +720,8 @@ server <- function(input, output, session) {
             ylab("Percent Remaining")+
             ggtitle("Displaying all embayments within this ecotype")
           ggplotly(c, tooltip = "text") %>%
-            rangeslider(1760, 2040, thickness=0.01) 
+            rangeslider(1760, 2040, thickness=0.01)
+          #event_register(c, event = "plotly_hover")
         }
         else{
           c <-ggplot(seagrass_ecotype_per_rem,aes(x = Year, y = SeagrassAcreage, 
@@ -713,11 +739,32 @@ server <- function(input, output, session) {
             ggtitle("Displaying all embayments within this ecotype")
           ggplotly(c, tooltip = "text") %>%
             rangeslider(1760, 2040, thickness=0.01)
+          #event_register(c, event = "plotly_hover")
         }
       }
     }
   })
   
+  ##### Attempt to make Embayment Polygon Highlighted with mouseover on plot ######
+  # output$hoverData <-renderPrint({
+  #   map_proxy %>% clearGroup("highlighted_selected_polygon")
+  #   select_eco_poly <- event_data("plotly_hover", source = c)
+  #     if (is.null(select_eco_poly())) "Click events appear here (double-click to clear)" 
+  #     else 
+  #       MassBaysEmbayments %>% #tibble::rownames_to_column() %>% 
+  #       filter(NAME==select_eco_poly()$`EMBAYMENT NAME`) #%>% 
+  #    #   filter(row_number()==select_eco_poly$pointNumber+1)
+  #   
+  #   #if (is.null(select_eco_poly)) "Click events appear here (double-click to clear)" 
+  #  # else MassBaysEmbayments[MassBaysEmbayments$NAME == select_eco_poly$`EMBAYMENT NAME`,]
+  #   #else MassBaysEmbayments[subset(MassBaysEmbayments$NAME==select_eco_poly$`EMBAYMENT NAME`),]
+  #   
+  #   map_proxy=leaflet::leafletProxy("mymap")
+  #   observeEvent(input$ecotype,{
+  #       map_proxy %>% leaflet::addPolygons(data=MassBaysEmbayments, weight = 2, color = "green", group = "highlighted_selected_polygon")
+  #   })
+  # })
+  # 
   ######### Ecotype: Salt Marsh data profiles #################         
   
   output$ecotype_marsh_profile <- renderPlotly({
@@ -862,6 +909,7 @@ server <- function(input, output, session) {
   ########## Generate Northeastern Category Stressor Profiles #############
   
   output$driving_stressor_profile <- renderPlotly({
+    if(input$main_category_tabs=="Stressors"){
     if(input$category!=""){
        if(input$category_data_tabs=="Driving Stressors"){
          selected_category_stressor <- subset(Tidy_Stressor_Data_norm,Tidy_Stressor_Data_norm$Northeastern_category==input$category)
@@ -894,6 +942,7 @@ server <- function(input, output, session) {
         ylab("Relative Stressor Value")
       ggplotly(xx, tooltip = "text")
        }
+    }
     }
   })
       
