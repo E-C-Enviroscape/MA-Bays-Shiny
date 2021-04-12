@@ -191,6 +191,14 @@ ui <- fluidPage(
                                                                    tabPanel("Tidal Flats",
                                                                             sidebarPanel(radioButtons("data_ecotype_flats_displayed","Choose data option", data_displayed)),
                                                                             mainPanel(plotlyOutput("ecotype_flats_profile", height = "700px"))
+                                                                   ),
+                                                                   tabPanel("Benthic Communities",
+                                                                            #sidebarPanel(radioButtons("benthic_displayed","Choose data option", data_displayed)),
+                                                                            #mainPanel(plotlyOutput("benthic_profile", height = "700px"))
+                                                                   ),
+                                                                   tabPanel("Diadromous Fish",
+                                                                            #sidebarPanel(radioButtons("diadromous_displayed","Choose data option", data_displayed)),
+                                                                            #mainPanel(plotlyOutput("diadromous_profile", height = "700px"))
                                                                    )
                                                        )
                                        ))
@@ -208,34 +216,64 @@ ui <- fluidPage(
                                        #)
                               ),
                               tabPanel("Stressor-Resource Categories", value = "Northeastern Category",
-                                       fluidRow(column(12,
-                                                       selectInput("category", label = "Northeastern Category", choices = category_choices)
-                                       )),
-                                       fluidRow(column(12,
-                                                       tabsetPanel("main_category_tabs",
+                                        fluidRow(column(12,div(style="height:20px"),
+                                                       tabsetPanel(id = "main_category_tabs",
                                                                    tabPanel("About",
-                                                                                headerPanel(#column(4,
-                                                                                  "Stressor-Resource Categories are clusters of embayments with similar present-day stressor and resource levels.
-                                                                                  Northeastern University conducted a Principal Component Analysis which grouped the 39 embayments into four 
-                                                                                  clusters based on analysis of combined stressor and resource data. Red arrows generally reflect the magnitude 
-                                                                                  of each variable’s contribution to the determination of clusters. See table below for embayment IDs and cluster assignments"
-                                                                                  #),
-                                                                                  #column(8,
-                                                                                   #img(height = '100px', width = '300px', src = "massbays_pca_plot.png"))
-                                                                                )
+                                                                            fluidRow(   
+                                                                            (column(12,
+                                                                                  br(),
+                                                                                  br(),
+                                                                                  h5("Stressor-Resource Categories are clusters of embayments with similar present-day stressor and resource levels.", align = "left"),
+                                                                                  br(),
+                                                                                  h5("Northeastern University conducted a Principal Component Analysis which grouped the 39 embayments into four clusters 
+                                                                                      based on analysis of combined stressor and resource data.", align = "left"),
+                                                                                  br(),
+                                                                                  h5("Red arrows generally reflect the magnitude of each variable’s contribution to the determination of clusters.", align = "left"),
+                                                                                  br(),
+                                                                                  h5("See table for embayment IDs and cluster assignments.", align = "left"),
+                                                                                  br(),
+                                                                                  h5("Choose the 'Stressors' tab above to select Stressor-Resource Categories and view their associated Driving Stressors and 
+                                                                                     Other Stressors", align = "left")
+                                                                                  ))
+                                                                                # (column(8,
+                                                                                #     img(src = "massbays_pca_plot.png")
+                                                                                #     )),
                                                                             ),
+                                                                            fluidRow(column(12,div(style="height:20px"),
+                                                                                    column(6,
+                                                                                           img(src = "massbays_pca_plot.png")
+                                                                                    ),
+                                                                                    column(6,
+                                                                                           img(src = "pca_table.png", height = '903px', width = '600px', align = "center")
+                                                                                    )
+                                                                            ))
+                                                                          ),
                                                                    tabPanel("Stressors",
-                                                                            tabsetPanel(id = "category_data_tabs",
-                                                                                        tabPanel("Driving Stressors",
-                                                                                                 plotlyOutput("driving_stressor_profile", height = "700px")
-                                                                                        ),
-                                                                                        tabPanel("Other Stressors",
-                                                                                                 plotlyOutput("other_stressor_profile", height = "700px")
+                                                                            fluidRow(column(12,
+                                                                                            selectInput("category", label = "Northeastern Category", choices = category_choices)
+                                                                            )),
+                                                                            fluidRow(column(12,
+                                                                              tabsetPanel(id = "category_data_tabs",
+                                                                                          tabPanel("Driving Stressors",
+                                                                                                  div(style="height:20px"),
+                                                                                                  h5("'Driving Stressors' are the variable(s) that contributed most to this Stressor-Resource Category’s 
+                                                                                                    clustering (see figure in About tab). All stressor levels have been adjusted to values between 0 and 1 
+                                                                                                    for comparison purposes.", align = "left"),
+                                                                                                  div(style="height:20px"),
+                                                                                                  plotlyOutput("driving_stressor_profile", height = "700px")
+                                                                                          ),
+                                                                                          tabPanel("Other Stressors",
+                                                                                                  div(style="height:20px"),
+                                                                                                  h5("‘Other Stressors’ are the remaining variable(s) for this Stressor-Resource Category that did not 
+                                                                                                     greatly influence clustering (see figure in About tab). All stressor levels have been adjusted to 
+                                                                                                     values between 0 and 1 for comparison purposes.", align = "left"),
+                                                                                                  div(style="height:20px"),
+                                                                                                  plotlyOutput("other_stressor_profile", height = "700px")
+                                                                                          )
                                                                                         )
-                                                                            )
+                                                                            ))
+                                                                          )
                                                                   )
-                                                         
-                                                       )
                                                        # tabsetPanel(id = "category_data_tabs",
                                                        #             tabPanel("Driving Stressors",
                                                        #                      plotlyOutput("driving_stressor_profile", height = "700px")
@@ -907,7 +945,7 @@ server <- function(input, output, session) {
   
   ################################################################################   
   ########## Generate Northeastern Category Stressor Profiles #############
-  
+
   output$driving_stressor_profile <- renderPlotly({
     if(input$main_category_tabs=="Stressors"){
     if(input$category!=""){
