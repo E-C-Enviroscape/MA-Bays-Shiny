@@ -1,45 +1,45 @@
-﻿EMBAYMENT NAME,EcoType,MassBays Region,Northeastern_category,Total KM Shore,Habitat,1775,1964,2005
-ANNISQUAM RIVER,Yellow,Upper North Shore,4,87,Marsh,"1,069",600,637
-BACK RIVER / FORE RIVER / HINGHAM BAY,Orange,Massachusetts Bay,3,124,Marsh,"1,167",508,526
-BARNSTABLE HARBOR,Yellow,Cape Cod,4,325,Marsh,"4,218","3,300",3844
-BELLE ISLE CREEK / WINTHROP BAY,Orange,Massachusetts Bay,3,38,Marsh,660,"2,040",349
-BLACK ROCK CREEK,Yellow,Upper North Shore,NA,40,Marsh,"1,318",,1072
-BLACKS CREEK / QUINCY BAY,Orange,Massachusetts Bay,3,27,Marsh,465,294,163
-BLUEFISH RIVER / BACK RIVER / DUXBURY BAY,Green,South Shore,4,133,Marsh,"1,933","1,340",1359
-BOAT MEADOW CREEK / ROCK HARBOR,Yellow,Cape Cod,4,17,Marsh,376,131,285
-BOSTON HARBOR ISLANDS,Orange,Massachusetts Bay,NA,43,Marsh,15,,5
-CHASE GARDEN CREEK,Yellow,Cape Cod,4,57,Marsh,"1,137","1,034",901
-CHELSEA CREEK / MYSTIC RIVER / CHARLES RIVER,Orange,Massachusetts Bay,3,98,Marsh,"2,585",,47
-COASTAL PLUM ISLAND SOUND,Yellow,Upper North Shore,4,306,Marsh,6097.2,"6,291",4592
-COHASSET HARBOR,Green,South Shore,4,61,Marsh,898,,546
-DANVERS RIVER,Orange,Lower North Shore,,43,Marsh,0,,101
-EEL RIVER / PLYMOUTH HARBOR,Green,South Shore,1,25,Marsh,226,,46
-ELLISVILLE HARBOR,Yellow,Cape Cod,2,10,Marsh,67,78,67
-ESSEX RIVER / ESSEX BAY,Yellow,Upper North Shore,4,202,Marsh,"4,263","2,083",3012
-FOREST RIVER/ SOUTH RIVER/ SALEM HARBOR,Orange,Lower North Shore,NA,23,Marsh,36,17,38
-GLOUCESTER HARBOR,Orange,Upper North Shore,1,26,Marsh,26,41,17
-HERRING RIVER / HERRING POND,Green,Cape Cod,2,16,Marsh,292,540,286
-IPSWICH RIVER,Yellow,Upper North Shore,4,88,Marsh,"1,629","1,664",1295
-JONES RIVER / KINGSTON BAY,Green,South Shore,4,38,Marsh,408,520,234
-LITTLE HARBOR,Yellow,Massachusetts Bay,4,19,Marsh,139,,58
-MANCHESTER HARBOR,Orange,Lower North Shore,NA,12,Marsh,24,,13
-MARBLEHEAD HARBOR,Orange,Lower North Shore,NA,13,Marsh,0,,7
-MERRIMACK RIVER,Yellow,Upper North Shore,4,168,Marsh,"2,413",,2572
-NAMSKAKET CREEK / LITTLE NAMSKAKET CREEK,Yellow,Cape Cod,2,20,Marsh,397,344,277
-NEPONSET RIVER / DORCHESTER BAY,Orange,Massachusetts Bay,3,57,Marsh,"2,184",314,340
-NORTH RIVER / SOUTH RIVER,Yellow,South Shore,4,163,Marsh,"2,671","3,650",2303
-PAINE'S CREEK / STONY BROOK,Yellow,Cape Cod,2,6,Marsh,267,,76
-PAMET RIVER / LITTLE PAMET RIVER,Yellow,Cape Cod,4,18,Marsh,519,510,249
-PARKER RIVER,Yellow,Upper North Shore,4,104,Marsh,"3,246","2,244",2148
-PROVINCETOWN HARBOR,Green,Cape Cod,1,38,Marsh,603,314,245
-QUIVETT CREEK,Yellow,Cape Cod,2,16,Marsh,325,318,227
-ROCKPORT HARBOR (SANDY BAY),Blue,Upper North Shore,1,11,Marsh,0,,
-ROWLEY RIVER,Yellow,Upper North Shore,4,75,Marsh,"2,030",339,1307
-SALEM SOUND / BEVERLY HARBOR,Orange,Lower North Shore,3,28,Marsh,27,50,46
-SANDWICH HARBOR,Green,Cape Cod,4,76,Marsh,624,600,568
-SAUGUS RIVER / PINES RIVER / LYNN HARBOR,Yellow,Massachusetts Bay,3,118,Marsh,"2,771","1,018",1007
-SCITUATE HARBOR,Green,South Shore,4,17,Marsh,306,830,100
-SCORTON CREEK,Yellow,Cape Cod,4,40,Marsh,572,580,398
-SESUIT CREEK / SESUIT HARBOR,Yellow,Cape Cod,4,8,Marsh,202,192,88
-WEIR RIVER / STRAITS POND,Orange,Massachusetts Bay,3,36,Marsh,137,122,145
-WELLFLEET HARBOR,Yellow,Cape Cod,2,94,Marsh,"2,246",786,1243
+﻿EMBAYMENT NAME,EcoType,MassBays Region,Northeastern_category,Total KM Shore,Habitat,Historic Marsh Hab Available (km),1775,1964,2005
+ANNISQUAM RIVER,Yellow,Upper North Shore,4,87,Marsh,85.2,"1,069",600,637
+BACK RIVER / FORE RIVER / HINGHAM BAY,Orange,Massachusetts Bay,3,124,Marsh,109.4,"1,167",508,526
+BARNSTABLE HARBOR,Yellow,Cape Cod,4,325,Marsh,324.2,"4,218","3,300",3844
+BELLE ISLE CREEK / WINTHROP BAY,Orange,Massachusetts Bay,3,38,Marsh,33.4,660,"2,040",349
+BLACK ROCK CREEK,Yellow,Upper North Shore,NA,40,Marsh,39.3,"1,318",,1072
+BLACKS CREEK / QUINCY BAY,Orange,Massachusetts Bay,3,27,Marsh,23,465,294,163
+BLUEFISH RIVER / BACK RIVER / DUXBURY BAY,Green,South Shore,4,133,Marsh,132,"1,933","1,340",1359
+BOAT MEADOW CREEK / ROCK HARBOR,Yellow,Cape Cod,4,17,Marsh,17.2,376,131,285
+BOSTON HARBOR ISLANDS,Orange,Massachusetts Bay,NA,43,Marsh,,15,,5
+CHASE GARDEN CREEK,Yellow,Cape Cod,4,57,Marsh,55.9,"1,137","1,034",901
+CHELSEA CREEK / MYSTIC RIVER / CHARLES RIVER,Orange,Massachusetts Bay,3,98,Marsh,81.7,"2,585",,47
+COASTAL PLUM ISLAND SOUND,Yellow,Upper North Shore,4,306,Marsh,,6097.2,"6,291",4592
+COHASSET HARBOR,Green,South Shore,4,61,Marsh,51.2,898,,546
+DANVERS RIVER,Orange,Lower North Shore,,43,Marsh,41.5,0,,101
+EEL RIVER / PLYMOUTH HARBOR,Green,South Shore,1,25,Marsh,21.5,226,,46
+ELLISVILLE HARBOR,Yellow,Cape Cod,2,10,Marsh,9.9,67,78,67
+ESSEX RIVER / ESSEX BAY,Yellow,Upper North Shore,4,202,Marsh,200.8,"4,263","2,083",3012
+FOREST RIVER/ SOUTH RIVER/ SALEM HARBOR,Orange,Lower North Shore,NA,23,Marsh,13.6,36,17,38
+GLOUCESTER HARBOR,Orange,Upper North Shore,1,26,Marsh,13.7,26,41,17
+HERRING RIVER / HERRING POND,Green,Cape Cod,2,16,Marsh,15.9,292,540,286
+IPSWICH RIVER,Yellow,Upper North Shore,4,88,Marsh,82.4,"1,629","1,664",1295
+JONES RIVER / KINGSTON BAY,Green,South Shore,4,38,Marsh,33.2,408,520,234
+LITTLE HARBOR,Yellow,Massachusetts Bay,4,19,Marsh,12.1,139,,58
+MANCHESTER HARBOR,Orange,Lower North Shore,NA,12,Marsh,8.4,24,,13
+MARBLEHEAD HARBOR,Orange,Lower North Shore,NA,13,Marsh,2.3,0,,7
+MERRIMACK RIVER,Yellow,Upper North Shore,4,168,Marsh,125,"2,413",,2572
+NAMSKAKET CREEK / LITTLE NAMSKAKET CREEK,Yellow,Cape Cod,2,20,Marsh,20.5,397,344,277
+NEPONSET RIVER / DORCHESTER BAY,Orange,Massachusetts Bay,3,57,Marsh,51.1,"2,184",314,340
+NORTH RIVER / SOUTH RIVER,Yellow,South Shore,4,163,Marsh,162.5,"2,671","3,650",2303
+PAINE'S CREEK / STONY BROOK,Yellow,Cape Cod,2,6,Marsh,5.5,267,,76
+PAMET RIVER / LITTLE PAMET RIVER,Yellow,Cape Cod,4,18,Marsh,17.5,519,510,249
+PARKER RIVER,Yellow,Upper North Shore,4,104,Marsh,103.9,"3,246","2,244",2148
+PROVINCETOWN HARBOR,Green,Cape Cod,1,38,Marsh,33.7,603,314,245
+QUIVETT CREEK,Yellow,Cape Cod,2,16,Marsh,15.7,325,318,227
+ROCKPORT HARBOR (SANDY BAY),Blue,Upper North Shore,1,11,Marsh,,0,,
+ROWLEY RIVER,Yellow,Upper North Shore,4,75,Marsh,72.6,"2,030",339,1307
+SALEM SOUND / BEVERLY HARBOR,Orange,Lower North Shore,3,28,Marsh,,27,50,46
+SANDWICH HARBOR,Green,Cape Cod,4,76,Marsh,76.1,624,600,568
+SAUGUS RIVER / PINES RIVER / LYNN HARBOR,Yellow,Massachusetts Bay,3,118,Marsh,106.4,"2,771","1,018",1007
+SCITUATE HARBOR,Green,South Shore,4,17,Marsh,15.6,306,830,100
+SCORTON CREEK,Yellow,Cape Cod,4,40,Marsh,36.7,572,580,398
+SESUIT CREEK / SESUIT HARBOR,Yellow,Cape Cod,4,8,Marsh,8.3,202,192,88
+WEIR RIVER / STRAITS POND,Orange,Massachusetts Bay,3,36,Marsh,30.1,137,122,145
+WELLFLEET HARBOR,Yellow,Cape Cod,2,94,Marsh,92.2,"2,246",786,1243
