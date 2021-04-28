@@ -24,8 +24,8 @@ Flats_Data <- read_csv("Flats_Data_MassBays_edit.csv")
 #Flats_Data <- merge(Flats_Data, Stressor_Data, by = "EMBAYMENT NAME", all = TRUE)
 
 Tidy_Flats_Data <- Flats_Data %>% 
-  #gather(Year, FlatsAcreage, 8:10) %>%
-  gather(Year, FlatsAcreage, 8:9) %>%
+  #gather(Year, FlatsAcreage, 8:10) %>% # these columns correspond to the "..._MassBays.csv" files
+  gather(Year, FlatsAcreage, 8:9) %>% # these columns correspond to the "..._edit.csv" files
   drop_na(FlatsAcreage)
 Tidy_Flats_Data$Year <- as.factor(Tidy_Flats_Data$Year)
 
@@ -33,8 +33,8 @@ Marsh_Data <- read_csv("Marsh_Data_MassBays_edit.csv")
 #Marsh_Data <- merge(Marsh_Data, Stressor_Data, by = "EMBAYMENT NAME", all = TRUE)
 
 Tidy_Marsh_Data <- Marsh_Data %>% 
-  #gather(Year, MarshAcreage, 8:11) %>%
-  gather(Year, MarshAcreage, 8:10) %>%
+  #gather(Year, MarshAcreage, 8:11) %>% # these columns correspond to the "..._MassBays.csv" files
+  gather(Year, MarshAcreage, 8:10) %>% # these columns correspond to the "..._edit.csv" files
   drop_na(MarshAcreage)
 Tidy_Marsh_Data$Year <- as.factor(Tidy_Marsh_Data$Year)
 
@@ -56,7 +56,8 @@ MassBaysEmbayments <- st_zm(MassBaysEmbayments, drop = T, what = "ZM")
 # Loading stressor data xlsx files
 Stressor_Data <- read_csv("EDA2Redo_TH_7-15-2020.csv")
 Stressor_Data <- merge(Flats_Data, Stressor_Data, by = "EMBAYMENT NAME", all = TRUE)
-Stressor_Data <- subset(Stressor_Data, select = -c(5:14, 29:33))
+#Stressor_Data <- subset(Stressor_Data, select = -c(5:14, 29:33)) # these columns correspond to the "..._MassBays.csv" files
+Stressor_Data <- subset(Stressor_Data, select = -c(5:10, 25:29)) # these columns correspond to the "..._edit.csv" files
 
 ##### Normalizing Stressor Data ################
 Stressor_Data_norm <- as.data.frame(apply(Stressor_Data[ ,5:18], 2, function(x) (x - min(x, na.rm = TRUE))/(max(x, na.rm = TRUE)-min(x, na.rm = TRUE))))
