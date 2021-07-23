@@ -1,45 +1,45 @@
-﻿EMBAYMENT NAME,EcoType,MassBays Region,Northeastern_category,Total KM Shore,Habitat,Historic Seagrass Hab Available (km),1775,1950,1995,2001,2006,2012,2016,2017
-ANNISQUAM RIVER,Yellow,Upper North Shore,4,87,Seagrass,85,295,48,17,11,,12,11,
-BACK RIVER / FORE RIVER / HINGHAM BAY,Orange,Massachusetts Bay,3,124,Seagrass,111,3070,469,181,39,,3,,
-BARNSTABLE HARBOR,Yellow,Cape Cod,4,325,Seagrass,,600,60,,,,,,
-BELLE ISLE CREEK / WINTHROP BAY,Orange,Massachusetts Bay,3,38,Seagrass,33,510,77,21,28,,43,35,
-BLACK ROCK CREEK,Yellow,Upper North Shore,NA,40,Seagrass,,,,,,,,,
-BLACKS CREEK / QUINCY BAY,Orange,Massachusetts Bay,3,27,Seagrass,,693,,,,,,,
-BLUEFISH RIVER / BACK RIVER / DUXBURY BAY,Green,South Shore,4,133,Seagrass,132,4053,2359,1559,1370,,1136,441,
-BOAT MEADOW CREEK / ROCK HARBOR,Yellow,Cape Cod,4,17,Seagrass,17,172,35,58,18,,,,
-BOSTON HARBOR ISLANDS,Orange,Massachusetts Bay,NA,43,Seagrass,,,,,,,,,
-CHASE GARDEN CREEK,Yellow,Cape Cod,4,57,Seagrass,56,229,46,46,62,,68,,51
-CHELSEA CREEK / MYSTIC RIVER / CHARLES RIVER,Orange,Massachusetts Bay,3,98,Seagrass,82,416,5,,,,35,24,
-COASTAL PLUM ISLAND SOUND,Yellow,Upper North Shore,4,306,Seagrass,,990,,,,,,,
-COHASSET HARBOR,Green,South Shore,4,61,Seagrass,52,500,149,113,118,,103,116,
-DANVERS RIVER,Orange,Lower North Shore,,43,Seagrass,,159,,,,,,,
-EEL RIVER / PLYMOUTH HARBOR,Green,South Shore,1,25,Seagrass,22,1173,782,320,252,,324,232,
-ELLISVILLE HARBOR,Yellow,Cape Cod,2,10,Seagrass,10,220,3,34,26,,31,37,
-ESSEX RIVER / ESSEX BAY,Yellow,Upper North Shore,4,202,Seagrass,,239,,,,,,,
-FOREST RIVER/ SOUTH RIVER/ SALEM HARBOR,Orange,Lower North Shore,NA,23,Seagrass,14,758,104,104,19,,19,20,
-GLOUCESTER HARBOR,Orange,Upper North Shore,1,26,Seagrass,16,265,51,46,37,,53,56,
-HERRING RIVER / HERRING POND,Green,Cape Cod,2,16,Seagrass,16,,,,,,,,
-IPSWICH RIVER,Yellow,Upper North Shore,4,88,Seagrass,,55,,,,,,,
-JONES RIVER / KINGSTON BAY,Green,South Shore,4,38,Seagrass,33,1541,750,348,313,,397,272,
-LITTLE HARBOR,Yellow,Massachusetts Bay,4,19,Seagrass,15,118,0,0,,,,,
-MANCHESTER HARBOR,Orange,Lower North Shore,NA,12,Seagrass,9,218,172,148,117,,120,122,
-MARBLEHEAD HARBOR,Orange,Lower North Shore,NA,13,Seagrass,3,215,38,37,19,,29,30,
-MERRIMACK RIVER,Yellow,Upper North Shore,4,168,Seagrass,,783,180,,,,,,
-NAMSKAKET CREEK / LITTLE NAMSKAKET CREEK,Yellow,Cape Cod,2,20,Seagrass,20,484,85,151,102,,14,,
-NEPONSET RIVER / DORCHESTER BAY,Orange,Massachusetts Bay,3,57,Seagrass,,1621,,,,,,,
-NORTH RIVER / SOUTH RIVER,Yellow,South Shore,4,163,Seagrass,,14,,,,,,,
-PAINE'S CREEK / STONY BROOK,Yellow,Cape Cod,2,6,Seagrass,6,483,54,54,82,,30,,39
-PAMET RIVER / LITTLE PAMET RIVER,Yellow,Cape Cod,4,18,Seagrass,17,918,625,441,533,,554,,510
-PARKER RIVER,Yellow,Upper North Shore,4,104,Seagrass,,70,,,,,,,
-PROVINCETOWN HARBOR,Green,Cape Cod,1,38,Seagrass,34,1728,1347,903,881,,982,,997
-QUIVETT CREEK,Yellow,Cape Cod,2,16,Seagrass,,79,,,,,,,
-ROCKPORT HARBOR (SANDY BAY),Blue,Upper North Shore,1,11,Seagrass,,4,3,2,2,,2,,2
-ROWLEY RIVER,Yellow,Upper North Shore,4,75,Seagrass,73,48,,,,,,,
-SALEM SOUND / BEVERLY HARBOR,Orange,Lower North Shore,3,28,Seagrass,,1664,444,403,374,,398,392,
-SANDWICH HARBOR,Green,Cape Cod,4,76,Seagrass,76,75,6,5,2,,2,,3
-SAUGUS RIVER / PINES RIVER / LYNN HARBOR,Yellow,Massachusetts Bay,3,118,Seagrass,107,3207,1074,751,667,,761,630,
-SCITUATE HARBOR,Green,South Shore,4,17,Seagrass,16,107,25,12,10,,8,10,
-SCORTON CREEK,Yellow,Cape Cod,4,40,Seagrass,,0,,,,,,,
-SESUIT CREEK / SESUIT HARBOR,Yellow,Cape Cod,4,8,Seagrass,,3,,,,,,,
-WEIR RIVER / STRAITS POND,Orange,Massachusetts Bay,3,36,Seagrass,,50,8,,,,,,
-WELLFLEET HARBOR,Yellow,Cape Cod,2,94,Seagrass,92,13388,6234,4675,1315,,1440,,998
+﻿EMBAYMENT NAME,EcoType,MassBays Region,Northeastern_category,Total KM Shore,Habitat,Historic Seagrass Hab Available (km),1775,1950,1995,2001,2006,2012,2016,2017,2050
+ROCKPORT HARBOR (SANDY BAY),Blue,Upper North Shore,1,11,Seagrass,,4,3,2,2,,2,,2,2
+BLUEFISH RIVER / BACK RIVER / DUXBURY BAY,Green,South Shore,4,133,Seagrass,132,4053,2359,1559,1370,,1136,441,,1559
+COHASSET HARBOR,Green,South Shore,4,61,Seagrass,52,500,149,113,118,,103,116,,113
+EEL RIVER / PLYMOUTH HARBOR,Green,South Shore,1,25,Seagrass,22,1173,782,320,252,,324,232,,320
+HERRING RIVER / HERRING POND,Green,Cape Cod,2,16,Seagrass,16,,,,,,,,,
+JONES RIVER / KINGSTON BAY,Green,South Shore,4,38,Seagrass,33,1541,750,348,313,,397,272,,348
+PROVINCETOWN HARBOR,Green,Cape Cod,1,38,Seagrass,34,1728,1347,903,881,,982,,997,903
+SANDWICH HARBOR,Green,Cape Cod,4,76,Seagrass,76,75,6,5,2,,2,,3,5
+SCITUATE HARBOR,Green,South Shore,4,17,Seagrass,16,107,25,12,10,,8,10,,12
+BACK RIVER / FORE RIVER / HINGHAM BAY,Orange,Massachusetts Bay,3,124,Seagrass,111,3070,469,181,39,,3,,,181
+BELLE ISLE CREEK / WINTHROP BAY,Orange,Massachusetts Bay,3,38,Seagrass,33,510,77,21,28,,43,35,,21
+BLACKS CREEK / QUINCY BAY,Orange,Massachusetts Bay,3,27,Seagrass,,693,,,,,,,,
+BOSTON HARBOR ISLANDS,Orange,Massachusetts Bay,NA,43,Seagrass,,,,,,,,,,
+CHELSEA CREEK / MYSTIC RIVER / CHARLES RIVER,Orange,Massachusetts Bay,3,98,Seagrass,82,416,5,,,,35,24,,
+DANVERS RIVER,Orange,Lower North Shore,,43,Seagrass,,159,,,,,,,,
+FOREST RIVER/ SOUTH RIVER/ SALEM HARBOR,Orange,Lower North Shore,NA,23,Seagrass,14,758,104,104,19,,19,20,,104
+GLOUCESTER HARBOR,Orange,Upper North Shore,1,26,Seagrass,16,265,51,46,37,,53,56,,46
+MANCHESTER HARBOR,Orange,Lower North Shore,NA,12,Seagrass,9,218,172,148,117,,120,122,,148
+MARBLEHEAD HARBOR,Orange,Lower North Shore,NA,13,Seagrass,3,215,38,37,19,,29,30,,37
+NEPONSET RIVER / DORCHESTER BAY,Orange,Massachusetts Bay,3,57,Seagrass,,1621,,,,,,,,
+SALEM SOUND / BEVERLY HARBOR,Orange,Lower North Shore,3,28,Seagrass,,1664,444,403,374,,398,392,,403
+WEIR RIVER / STRAITS POND,Orange,Massachusetts Bay,3,36,Seagrass,,50,8,,,,,,,
+ANNISQUAM RIVER,Yellow,Upper North Shore,4,87,Seagrass,85,295,48,17,11,,12,11,,17
+BARNSTABLE HARBOR,Yellow,Cape Cod,4,325,Seagrass,,600,60,,,,,,,
+BLACK ROCK CREEK,Yellow,Upper North Shore,NA,40,Seagrass,,,,,,,,,,
+BOAT MEADOW CREEK / ROCK HARBOR,Yellow,Cape Cod,4,17,Seagrass,17,172,35,58,18,,,,,58
+CHASE GARDEN CREEK,Yellow,Cape Cod,4,57,Seagrass,56,229,46,46,62,,68,,51,46
+COASTAL PLUM ISLAND SOUND,Yellow,Upper North Shore,4,306,Seagrass,,990,,,,,,,,
+ELLISVILLE HARBOR,Yellow,Cape Cod,2,10,Seagrass,10,220,3,34,26,,31,37,,34
+ESSEX RIVER / ESSEX BAY,Yellow,Upper North Shore,4,202,Seagrass,,239,,,,,,,,
+IPSWICH RIVER,Yellow,Upper North Shore,4,88,Seagrass,,55,,,,,,,,
+LITTLE HARBOR,Yellow,Massachusetts Bay,4,19,Seagrass,15,118,0,0,,,,,,0
+MERRIMACK RIVER,Yellow,Upper North Shore,4,168,Seagrass,,783,180,,,,,,,
+NAMSKAKET CREEK / LITTLE NAMSKAKET CREEK,Yellow,Cape Cod,2,20,Seagrass,20,484,85,151,102,,14,,,151
+NORTH RIVER / SOUTH RIVER,Yellow,South Shore,4,163,Seagrass,,14,,,,,,,,
+PAINE'S CREEK / STONY BROOK,Yellow,Cape Cod,2,6,Seagrass,6,483,54,54,82,,30,,39,54
+PAMET RIVER / LITTLE PAMET RIVER,Yellow,Cape Cod,4,18,Seagrass,17,918,625,441,533,,554,,510,441
+PARKER RIVER,Yellow,Upper North Shore,4,104,Seagrass,,70,,,,,,,,
+QUIVETT CREEK,Yellow,Cape Cod,2,16,Seagrass,,79,,,,,,,,
+ROWLEY RIVER,Yellow,Upper North Shore,4,75,Seagrass,73,48,,,,,,,,
+SAUGUS RIVER / PINES RIVER / LYNN HARBOR,Yellow,Massachusetts Bay,3,118,Seagrass,107,3207,1074,751,667,,761,630,,751
+SCORTON CREEK,Yellow,Cape Cod,4,40,Seagrass,,0,,,,,,,,
+SESUIT CREEK / SESUIT HARBOR,Yellow,Cape Cod,4,8,Seagrass,,3,,,,,,,,
+WELLFLEET HARBOR,Yellow,Cape Cod,2,94,Seagrass,92,13388,6234,4675,1315,,1440,,998,4675

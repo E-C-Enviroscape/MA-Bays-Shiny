@@ -25,7 +25,7 @@ Flats_Data <- read_csv("Flats_Data_MassBays_edit.csv")
 
 Tidy_Flats_Data <- Flats_Data %>% 
   #gather(Year, FlatsAcreage, 8:10) %>% # these columns correspond to the "..._MassBays.csv" files
-  gather(Year, FlatsAcreage, 8:9) %>% # these columns correspond to the "..._edit.csv" files
+  gather(Year, FlatsAcreage, 8:10) %>% # these columns correspond to the "..._edit.csv" files
   drop_na(FlatsAcreage)
 Tidy_Flats_Data$Year <- as.factor(Tidy_Flats_Data$Year)
 
@@ -34,7 +34,7 @@ Marsh_Data <- read_csv("Marsh_Data_MassBays_edit.csv")
 
 Tidy_Marsh_Data <- Marsh_Data %>% 
   #gather(Year, MarshAcreage, 8:11) %>% # these columns correspond to the "..._MassBays.csv" files
-  gather(Year, MarshAcreage, 8:10) %>% # these columns correspond to the "..._edit.csv" files
+  gather(Year, MarshAcreage, 8:11) %>% # these columns correspond to the "..._edit.csv" files
   drop_na(MarshAcreage)
 Tidy_Marsh_Data$Year <- as.factor(Tidy_Marsh_Data$Year)
 
@@ -42,7 +42,7 @@ Seagrass_Data <- read_csv("Seagrass_Data_MassBays.csv")
 #Seagrass_Data <- merge(Seagrass_Data, Stressor_Data, by = "EMBAYMENT NAME", all = TRUE)
 
 Tidy_Seagrass_Data <- Seagrass_Data %>% 
-  gather(Year, SeagrassAcreage, 8:15)%>%
+  gather(Year, SeagrassAcreage, 8:16)%>%
   drop_na(SeagrassAcreage)
 Tidy_Seagrass_Data$Year <- as.factor(Tidy_Seagrass_Data$Year)
 
@@ -57,7 +57,7 @@ MassBaysEmbayments <- st_zm(MassBaysEmbayments, drop = T, what = "ZM")
 Stressor_Data <- read_csv("EDA2Redo_TH_7-15-2020.csv")
 Stressor_Data <- merge(Flats_Data, Stressor_Data, by = "EMBAYMENT NAME", all = TRUE)
 #Stressor_Data <- subset(Stressor_Data, select = -c(5:14, 29:33)) # these columns correspond to the "..._MassBays.csv" files
-Stressor_Data <- subset(Stressor_Data, select = -c(5:10, 25:29)) # these columns correspond to the "..._edit.csv" files
+Stressor_Data <- subset(Stressor_Data, select = -c(5:11, 26:30)) # these columns correspond to the "..._edit.csv" files
 
 ##### Normalizing Stressor Data ################
 Stressor_Data_norm <- as.data.frame(apply(Stressor_Data[ ,5:18], 2, function(x) (x - min(x, na.rm = TRUE))/(max(x, na.rm = TRUE)-min(x, na.rm = TRUE))))
@@ -401,7 +401,7 @@ server <- function(input, output, session) {
     leaflet() %>%
       addProviderTiles(providers$Esri.OceanBasemap,
                        options = providerTileOptions(noWrap = TRUE)
-      ) %>% setView(-70.5, 42.2, zoom = 8) %>% addPolygons(data=MassBaysEmbayments, weight = 1)
+      ) %>% setView(-70.5, 42.2, zoom = 8) %>% addPolygons(data=MassBaysEmbayments, weight = 1, layerId = ~NAME)
   })
   
   ########## Change map to show selected embayment polygon ################
@@ -416,6 +416,19 @@ server <- function(input, output, session) {
     }
   })
   
+  # clicking on a polygon updates selection of embayment
+  observe({ 
+    event <- input$mymap_shape_click
+    print(event$id)
+    
+    updateSelectInput(session,
+                      inputId = "embayment",
+                      label = "MassBays Embayment",
+                      choices = embayment_choices,
+                      selected = event$id)
+    
+  })
+
   ######### Change map to show selected ecotype polygons ###################
   map_proxy=leaflet::leafletProxy("mymap")
   observeEvent(input$ecotype,{
@@ -753,15 +766,17 @@ server <- function(input, output, session) {
                                                 "Stressor-Resource Category: ",Northeastern_category, "\n",
                                                 "MassBays Region: ",`MassBays Region`))
                                                 ))+
-            geom_line(aes(group=`EMBAYMENT NAME`, color = `EMBAYMENT NAME`))+
-            geom_point()+
+            geom_line(aes(group=`EMBAYMENT NAME`, color = `EMBAYMENT NAME`, ))+
+            #geom_point()+
+            geom_point(shape = ifelse(seagrass_ecotype_per_rem$Year == 2050, 15, 16))+
             scale_y_log10()+
-            scale_x_continuous(breaks = seq(1760, 2020, by = 20))+
+            #scale_x_continuous(breaks = seq(1760, 2040, by = 20))+
+            scale_x_continuous(breaks = seq(1760, 2060, by = 20))+
             theme(legend.position="none")+
             ylab("Percent Remaining")+
             ggtitle("Displaying all embayments within this ecotype")
           ggplotly(c, tooltip = "text") %>%
-            rangeslider(1760, 2040, thickness=0.01)
+            rangeslider(1760, 2060, thickness=0.01)
           #event_register(c, event = "plotly_hover")
         }
         else{
@@ -773,13 +788,15 @@ server <- function(input, output, session) {
                                                                 "MassBays Region: ",`MassBays Region`))
                                                   ))+
             geom_line(aes(group=`EMBAYMENT NAME`, color = `EMBAYMENT NAME`))+
-            geom_point()+
-            scale_x_continuous(breaks = seq(1760, 2020, by = 20))+
+            #geom_point()+
+            geom_point(shape = ifelse(seagrass_ecotype_per_rem$Year == 2050, 15, 16))+
+            #scale_x_continuous(breaks = seq(1760, 2040, by = 20))+
+            scale_x_continuous(breaks = seq(1760, 2060, by = 20))+
             theme(legend.position="none")+
             ylab("Acres")+
             ggtitle("Displaying all embayments within this ecotype")
           ggplotly(c, tooltip = "text") %>%
-            rangeslider(1760, 2040, thickness=0.01)
+            rangeslider(1760, 2060, thickness=0.01)
           #event_register(c, event = "plotly_hover")
         }
       }
