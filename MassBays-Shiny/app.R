@@ -139,7 +139,7 @@ regions_choices = c(
   "Upper North Shore"
 )
 
-data_displayed =c("Percent Remaining", "Acres")
+data_displayed =c("Percent Remaining", "Acres", "Ecosystem Services")
 
 category_choices = c("SELECT CATEGORY","1", "2", "3", "4", "NA")
 
@@ -717,27 +717,29 @@ server <- function(input, output, session) {
                                           text = (paste("Year: ",Year, "\n",
                                                         "Percent remaining: ",percent_remaining, "\n"))
                                           ))+
-              geom_line(aes(group=Habitat))+
-              geom_point()+
+              geom_line(aes(group=Habitat), linetype = 2)+
+              geom_point(shape = ifelse(ecotype_totals$Year == 2050, 9, 1), size = 2.5)+
+              geom_line(data=subset(ecotype_totals, Year < 2050),aes(group = Habitat, color = Habitat))+
               scale_y_log10()+
-              scale_x_continuous(breaks = seq(1760, 2020, by = 20))+
+              scale_x_continuous(breaks = seq(1760, 2060, by = 20))+
               #theme(legend.position="none")+
               ylab("Percent Remaining")
             ggplotly(d, tooltip = "text") %>%
-              rangeslider(1760, 2040, thickness=0.01)
+              rangeslider(1760, 2060, thickness=0.01)
           }
           else{
             d <-ggplot(ecotype_totals,aes(x = Year, y = TotalAcreage, color = Habitat,
                                           text = (paste("Year: ",Year, "\n",
                                                         "Acres: ",TotalAcreage, "\n"))
                                           ))+
-              geom_line(aes(group=Habitat))+
-              geom_point()+
-              scale_x_continuous(breaks = seq(1760, 2020, by = 20))+
+              geom_line(aes(group=Habitat), linetype = 2)+
+              geom_point(shape = ifelse(ecotype_totals$Year == 2050, 9, 1), size = 2.5)+
+              geom_line(data=subset(ecotype_totals, Year < 2050),aes(group = Habitat, color = Habitat))+
+              scale_x_continuous(breaks = seq(1760, 2060, by = 20))+
               #theme(legend.position="none")+
               ylab("Acres")
             ggplotly(d, tooltip = "text") %>%
-              rangeslider(1760, 2040, thickness=0.01)
+              rangeslider(1760, 2060, thickness=0.01)
           }
         }
       }
