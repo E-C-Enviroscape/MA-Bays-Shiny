@@ -766,18 +766,16 @@ server <- function(input, output, session) {
                                                 "Stressor-Resource Category: ",Northeastern_category, "\n",
                                                 "MassBays Region: ",`MassBays Region`))
                                                 ))+
-            geom_line(aes(group=`EMBAYMENT NAME`, color = `EMBAYMENT NAME`, ))+
-            #geom_point()+
-            geom_point(shape = ifelse(seagrass_ecotype_per_rem$Year == 2050, 15, 16))+
+            geom_line(aes(group=`EMBAYMENT NAME`, color = `EMBAYMENT NAME`), linetype = 2)+ # linetype = 2 makes the line dashed
+            geom_point(shape = ifelse(seagrass_ecotype_per_rem$Year == 2050, 9, 1), size = 2.5)+ # make a different symbol for the 2050 data point
+            geom_line(data=subset(seagrass_ecotype_per_rem, Year <= 2017),aes(group=`EMBAYMENT NAME`, color = `EMBAYMENT NAME`))+ # plots the interval up to 2017 as a solid line over the dashed line for the complete record
             scale_y_log10()+
-            #scale_x_continuous(breaks = seq(1760, 2040, by = 20))+
             scale_x_continuous(breaks = seq(1760, 2060, by = 20))+
             theme(legend.position="none")+
             ylab("Percent Remaining")+
             ggtitle("Displaying all embayments within this ecotype")
           ggplotly(c, tooltip = "text") %>%
             rangeslider(1760, 2060, thickness=0.01)
-          #event_register(c, event = "plotly_hover")
         }
         else{
           c <-ggplot(seagrass_ecotype_per_rem,aes(x = Year, y = SeagrassAcreage, 
@@ -787,42 +785,21 @@ server <- function(input, output, session) {
                                                                 "Stressor-Resource Category: ",Northeastern_category, "\n",
                                                                 "MassBays Region: ",`MassBays Region`))
                                                   ))+
-            geom_line(aes(group=`EMBAYMENT NAME`, color = `EMBAYMENT NAME`))+
+            geom_line(aes(group=`EMBAYMENT NAME`, color = `EMBAYMENT NAME`), linetype = 2)+
             #geom_point()+
-            geom_point(shape = ifelse(seagrass_ecotype_per_rem$Year == 2050, 15, 16))+
-            #scale_x_continuous(breaks = seq(1760, 2040, by = 20))+
+            geom_point(shape = ifelse(seagrass_ecotype_per_rem$Year == 2050, 9, 1), size = 2.5)+
+            geom_line(data=subset(seagrass_ecotype_per_rem, Year <= 2017),aes(group=`EMBAYMENT NAME`, color = `EMBAYMENT NAME`))+
             scale_x_continuous(breaks = seq(1760, 2060, by = 20))+
             theme(legend.position="none")+
             ylab("Acres")+
             ggtitle("Displaying all embayments within this ecotype")
           ggplotly(c, tooltip = "text") %>%
             rangeslider(1760, 2060, thickness=0.01)
-          #event_register(c, event = "plotly_hover")
         }
       }
     }
   })
   
-  ##### Attempt to make Embayment Polygon Highlighted with mouseover on plot ######
-  # output$hoverData <-renderPrint({
-  #   map_proxy %>% clearGroup("highlighted_selected_polygon")
-  #   select_eco_poly <- event_data("plotly_hover", source = c)
-  #     if (is.null(select_eco_poly())) "Click events appear here (double-click to clear)" 
-  #     else 
-  #       MassBaysEmbayments %>% #tibble::rownames_to_column() %>% 
-  #       filter(NAME==select_eco_poly()$`EMBAYMENT NAME`) #%>% 
-  #    #   filter(row_number()==select_eco_poly$pointNumber+1)
-  #   
-  #   #if (is.null(select_eco_poly)) "Click events appear here (double-click to clear)" 
-  #  # else MassBaysEmbayments[MassBaysEmbayments$NAME == select_eco_poly$`EMBAYMENT NAME`,]
-  #   #else MassBaysEmbayments[subset(MassBaysEmbayments$NAME==select_eco_poly$`EMBAYMENT NAME`),]
-  #   
-  #   map_proxy=leaflet::leafletProxy("mymap")
-  #   observeEvent(input$ecotype,{
-  #       map_proxy %>% leaflet::addPolygons(data=MassBaysEmbayments, weight = 2, color = "green", group = "highlighted_selected_polygon")
-  #   })
-  # })
-  # 
   ######### Ecotype: Salt Marsh data profiles #################         
   
   output$ecotype_marsh_profile <- renderPlotly({
@@ -845,15 +822,16 @@ server <- function(input, output, session) {
                                                             "Stressor-Resource Category: ",Northeastern_category, "\n",
                                                             "MassBays Region: ",`MassBays Region`))
                                                ))+
-            geom_line(aes(group=`EMBAYMENT NAME`, color = `EMBAYMENT NAME`))+
-            geom_point()+
+            geom_line(aes(group=`EMBAYMENT NAME`, color = `EMBAYMENT NAME`), linetype = 2)+
+            geom_point(shape = ifelse(marsh_ecotype_per_rem$Year == 2050, 9, 1), size = 2.5)+
+            geom_line(data=subset(marsh_ecotype_per_rem, Year <= 2005),aes(group=`EMBAYMENT NAME`, color = `EMBAYMENT NAME`))+
             scale_y_log10()+
-            scale_x_continuous(breaks = seq(1760, 2020, by = 20))+
+            scale_x_continuous(breaks = seq(1760, 2060, by = 20))+
             theme(legend.position="none")+
             ylab("Percent Remaining")+
             ggtitle("Displaying all embayments within this ecotype")
           ggplotly(b, tooltip = "text") %>%
-            rangeslider(1760, 2040, thickness=0.01)
+            rangeslider(1760, 2060, thickness=0.01)
         }
         else{
           b <-ggplot(marsh_ecotype_per_rem,aes(x = Year, y = MarshAcreage, 
@@ -863,14 +841,15 @@ server <- function(input, output, session) {
                                                              "Stressor-Resource Category: ",Northeastern_category, "\n",
                                                              "MassBays Region: ",`MassBays Region`))
                                               ))+
-            geom_line(aes(group=`EMBAYMENT NAME`, color = `EMBAYMENT NAME`))+
-            geom_point()+
-            scale_x_continuous(breaks = seq(1760, 2020, by = 20))+
+            geom_line(aes(group=`EMBAYMENT NAME`, color = `EMBAYMENT NAME`), linetype = 2)+
+            geom_point(shape = ifelse(marsh_ecotype_per_rem$Year == 2050, 9, 1), size = 2.5)+
+            geom_line(data=subset(marsh_ecotype_per_rem, Year <= 2005),aes(group=`EMBAYMENT NAME`, color = `EMBAYMENT NAME`))+
+            scale_x_continuous(breaks = seq(1760, 2060, by = 20))+
             theme(legend.position="none")+
             ylab("Acres")+
             ggtitle("Displaying all embayments within this ecotype")
           ggplotly(b, tooltip = "text") %>%
-            rangeslider(1760, 2040, thickness=0.01)
+            rangeslider(1760, 2060, thickness=0.01)
         }
       }
     }
@@ -898,15 +877,16 @@ server <- function(input, output, session) {
                                                              "Stressor-Resource Category: ",Northeastern_category, "\n",
                                                              "MassBays Region: ",`MassBays Region`))
                                               ))+
-            geom_line(aes(group=`EMBAYMENT NAME`, color = `EMBAYMENT NAME`))+
-            geom_point()+
+            geom_line(aes(group=`EMBAYMENT NAME`, color = `EMBAYMENT NAME`), linetype = 2)+
+            geom_point(shape = ifelse(flats_ecotype_per_rem$Year == 2050, 9, 1), size = 2.5)+
+            geom_line(data=subset(flats_ecotype_per_rem, Year <= 2005),aes(group=`EMBAYMENT NAME`, color = `EMBAYMENT NAME`))+
             scale_y_log10()+
-            scale_x_continuous(breaks = seq(1760, 2020, by = 20))+
+            scale_x_continuous(breaks = seq(1760, 2060, by = 20))+
             theme(legend.position="none")+
             ylab("Percent Remaining")+
             ggtitle("Displaying all embayments within this ecotype")
           ggplotly(a, tooltip = "text") %>%
-            rangeslider(1760, 2040, thickness=0.01)
+            rangeslider(1760, 2060, thickness=0.01)
         }
         else{
           a <-ggplot(flats_ecotype_per_rem,aes(x = Year, y = FlatsAcreage, 
@@ -916,14 +896,15 @@ server <- function(input, output, session) {
                                                              "Stressor-Resource Category: ",Northeastern_category, "\n",
                                                              "MassBays Region: ",`MassBays Region`))
                                               ))+
-            geom_line(aes(group=`EMBAYMENT NAME`, color = `EMBAYMENT NAME`))+
-            geom_point()+
-            scale_x_continuous(breaks = seq(1760, 2020, by = 20))+
+            geom_line(aes(group=`EMBAYMENT NAME`, color = `EMBAYMENT NAME`), linetype = 2)+
+            geom_point(shape = ifelse(flats_ecotype_per_rem$Year == 2050, 9, 1), size = 2.5)+
+            geom_line(data=subset(flats_ecotype_per_rem, Year <= 2005),aes(group=`EMBAYMENT NAME`, color = `EMBAYMENT NAME`))+
+            scale_x_continuous(breaks = seq(1760, 2060, by = 20))+
             theme(legend.position="none")+
             ylab("Acres")+
             ggtitle("Displaying all embayments within this ecotype")
           ggplotly(a, tooltip = "text") %>%
-            rangeslider(1760, 2040, thickness=0.01)
+            rangeslider(1760, 2060, thickness=0.01)
         }
       }
     }
