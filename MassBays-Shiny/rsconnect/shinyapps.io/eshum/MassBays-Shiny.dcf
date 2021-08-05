@@ -5,8 +5,8 @@ account: eshum
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 3833887
-bundleId: 4530270
+bundleId: 4891950
 url: https://eshum.shinyapps.io/MassBays-Shiny/
-when: 1619618947.67271
+when: 1628179453.89026
 asMultiple: FALSE
 asStatic: FALSE

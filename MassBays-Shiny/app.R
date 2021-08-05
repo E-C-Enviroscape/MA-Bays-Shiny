@@ -46,6 +46,8 @@ Tidy_Seagrass_Data <- Seagrass_Data %>%
   drop_na(SeagrassAcreage)
 Tidy_Seagrass_Data$Year <- as.factor(Tidy_Seagrass_Data$Year)
 
+ESV_Data <- read_csv("Emily_ESG_Draft_dataset.csv")
+
 MassBaysEmbayments <- st_read(dsn = "massbays_estuarine_embays_2021", layer = "massbays_estuarine_embays_2021")
 
 MassBaysEmbayments <-
@@ -139,7 +141,9 @@ regions_choices = c(
   "Upper North Shore"
 )
 
-data_displayed =c("Percent Remaining", "Acres", "Ecosystem Services")
+data_displayed =c("Percent Remaining", "Acres")
+
+esv_data_displayed =c("All Salt Marsh", "High Elevation Salt Marsh", "Low Elevation Salt Marsh", "Seagrass", "Tidal Flats", "Unclassified Salt Marsh")
 
 category_choices = c("SELECT CATEGORY","1", "2", "3", "4", "NA")
 
@@ -350,6 +354,10 @@ ui <- fluidPage(
                                                                    # tabPanel("Stressor Data",
                                                                    #          plotlyOutput("embayment_stressor_profiles", height = "600px")
                                                                    # ),
+                                                                   tabPanel("Ecosystem Services",
+                                                                            sidebarPanel(radioButtons("data_esv_displayed","Choose habitat type", esv_data_displayed)),
+                                                                            mainPanel(plotlyOutput("embayment_esv_profiles", height = "600px"))
+                                                                   ),
                                                                    tabPanel(id = "emabyment_tables","Data Tables",
                                                                             tabsetPanel(id = "embayment_data",
                                                                                         tabPanel("Tidal Flats", value = "Tidal Flats",
@@ -585,27 +593,29 @@ server <- function(input, output, session) {
                                                      text = (paste("Year: ",Year, "\n",
                                                                    "Percent remaining: ",percent_remaining, "\n"))
                                                      ))+
-            geom_line(aes(group=Habitat))+
-            geom_point()+
+            geom_line(aes(group=Habitat), linetype = 2)+
+            geom_point(shape = ifelse(all_selected_embayment_data$Year == 2050, 9, 1), size = 2.5)+
+            geom_line(data=subset(all_selected_embayment_data, Year < 2050),aes(group = Habitat, color = Habitat))+
             scale_y_log10()+
-            scale_x_continuous(breaks = seq(1760, 2020, by = 20))+
+            scale_x_continuous(breaks = seq(1760, 2060, by = 20))+
             #theme(legend.position="none")+
             ylab("Percent Remaining")
           ggplotly(e, tooltip = "text") %>%
-            rangeslider(1760, 2040, thickness=0.01)
+            rangeslider(1760, 2060, thickness=0.01)
         }
         else{
           e <-ggplot(all_selected_embayment_data,aes(x = Year, y = Acreage, color = Habitat,
                                                      text = (paste("Year: ",Year, "\n",
                                                                    "Acres: ",Acreage, "\n"))
                                                      ))+
-            geom_line(aes(group=Habitat))+
-            geom_point()+
-            scale_x_continuous(breaks = seq(1760, 2020, by = 20))+
+            geom_line(aes(group=Habitat), linetype = 2)+
+            geom_point(shape = ifelse(all_selected_embayment_data$Year == 2050, 9, 1), size = 2.5)+
+            geom_line(data=subset(all_selected_embayment_data, Year < 2050),aes(group = Habitat, color = Habitat))+
+            scale_x_continuous(breaks = seq(1760, 2060, by = 20))+
             #theme(legend.position="none")+
             ylab("Acres")
           ggplotly(e, tooltip = "text") %>%
-            rangeslider(1760, 2040, thickness=0.01)
+            rangeslider(1760, 2060, thickness=0.01)
         }
       }
     }
@@ -1487,6 +1497,159 @@ server <- function(input, output, session) {
   #     }
   #   }
   # }) 
+  ################################################################################
+  ########## Generate Ecosystem Services Profiles for Embayments      
+  
+  output$embayment_esv_profiles <- renderPlotly({
+    if(input$plot_tabs=="Embayment"){
+      if(input$embayment!=""){
+        selected_embayment_esv <- subset(ESV_Data,ESV_Data$`EMBAYMENT NAME`==input$embayment)
+        validate(
+          need(selected_embayment_esv$pct_change!="", "NO ECOSYSTEM SERVICES DATA AVAILABLE")
+        )
+        selected_embayment_esv$Year <- as.numeric(as.character(selected_embayment_esv$Year))
+        selected_embayment_esv_subset <-subset(selected_embayment_esv, ConnectivityScale == "Embayment Only" & ConnectivityType == "Both Combined")
+        if(input$data_esv_displayed=="All Salt Marsh"){
+          selected_embayment_esv_ASM <-subset(selected_embayment_esv_subset, Habitat == "All Salt Marsh")
+          c <-ggplot(selected_embayment_esv_ASM,aes(x = Year, y = pct_change, 
+                                                  text = (paste("Year: ",Year, "\n",
+                                                                "Percent change: ",pct_change, "\n",
+                                                                "Embayment: ",`EMBAYMENT NAME`, "\n",
+                                                                "Ecosystem Service: ",ES2, "\n",
+                                                                "Connectivity Scale: ",ConnectivityScale, "\n",
+                                                                "Connectivity Type: ", ConnectivityType))
+          ))+
+            geom_line(aes(group=ES2, color = ES2), linetype = 2)+ # linetype = 2 makes the line dashed
+            geom_point(shape = ifelse(selected_embayment_esv_ASM$Year == 2050, 9, 1), size = 2.5)+ # make a different symbol for the 2050 data point
+            geom_line(data=subset(selected_embayment_esv_ASM, Year <= 2016),aes(group = ES2, color = ES2))+ # plots the interval up to 2017 as a solid line over the dashed line for the complete record
+            scale_y_log10()+
+            scale_x_continuous(breaks = seq(1990, 2060, by = 10))+
+            #theme(legend.position="none")+
+            theme(legend.background = element_rect(colour = 'black', fill = 'white', linetype='solid')) +
+            ylab("Percent Change")+
+            guides(color=guide_legend(title='Ecosystem Service')) +
+            ggtitle("Displaying all Ecosystem Services within this embayment")
+          ggplotly(c, tooltip = "text") %>%
+            rangeslider(1990, 2060, thickness=0.01)
+        }
+        else if(input$data_esv_displayed=="High Elevation Salt Marsh") {
+          selected_embayment_esv_HESM <-subset(selected_embayment_esv_subset, Habitat == "High Elevation Salt Marsh")
+          c <-ggplot(selected_embayment_esv_HESM,aes(x = Year, y = pct_change, 
+                                                    text = (paste("Year: ",Year, "\n",
+                                                                  "Percent change: ",pct_change, "\n",
+                                                                  "Embayment: ",`EMBAYMENT NAME`, "\n",
+                                                                  "Ecosystem Service: ",ES2, "\n",
+                                                                  "Connectivity Scale: ",ConnectivityScale, "\n",
+                                                                  "Connectivity Type: ", ConnectivityType))
+          ))+
+            geom_line(aes(group=ES2, color = ES2), linetype = 2)+ # linetype = 2 makes the line dashed
+            geom_point(shape = ifelse(selected_embayment_esv_HESM$Year == 2050, 9, 1), size = 2.5)+ # make a different symbol for the 2050 data point
+            geom_line(data=subset(selected_embayment_esv_HESM, Year <= 2016),aes(group = ES2, color = ES2))+ # plots the interval up to 2017 as a solid line over the dashed line for the complete record
+            scale_y_log10()+
+            scale_x_continuous(breaks = seq(1990, 2060, by = 10))+
+            #theme(legend.position="none")+
+            theme(legend.background = element_rect(colour = 'black', fill = 'white', linetype='solid')) +
+            ylab("Percent Change")+
+            guides(color=guide_legend(title='Ecosystem Service')) +
+            ggtitle("Displaying all Ecosystem Services within this embayment")
+          ggplotly(c, tooltip = "text") %>%
+            rangeslider(1990, 2060, thickness=0.01)
+        }
+        else if(input$data_esv_displayed=="Low Elevation Salt Marsh") {
+          selected_embayment_esv_LESM <-subset(selected_embayment_esv_subset, Habitat == "Low Elevation Salt Marsh")
+          c <-ggplot(selected_embayment_esv_LESM,aes(x = Year, y = pct_change, 
+                                                    text = (paste("Year: ",Year, "\n",
+                                                                  "Percent change: ",pct_change, "\n",
+                                                                  "Embayment: ",`EMBAYMENT NAME`, "\n",
+                                                                  "Ecosystem Service: ",ES2, "\n",
+                                                                  "Connectivity Scale: ",ConnectivityScale, "\n",
+                                                                  "Connectivity Type: ", ConnectivityType))
+          ))+
+            geom_line(aes(group=ES2, color = ES2), linetype = 2)+ # linetype = 2 makes the line dashed
+            geom_point(shape = ifelse(selected_embayment_esv_LESM$Year == 2050, 9, 1), size = 2.5)+ # make a different symbol for the 2050 data point
+            geom_line(data=subset(selected_embayment_esv_LESM, Year <= 2016),aes(group = ES2, color = ES2))+ # plots the interval up to 2017 as a solid line over the dashed line for the complete record
+            scale_y_log10()+
+            scale_x_continuous(breaks = seq(1990, 2060, by = 10))+
+            #theme(legend.position="none")+
+            theme(legend.background = element_rect(colour = 'black', fill = 'white', linetype='solid')) +
+            ylab("Percent Change")+
+            guides(color=guide_legend(title='Ecosystem Service')) +
+            ggtitle("Displaying all Ecosystem Services within this embayment")
+          ggplotly(c, tooltip = "text") %>%
+            rangeslider(1990, 2060, thickness=0.01)
+        }
+        else if(input$data_esv_displayed=="Seagrass") {
+          selected_embayment_esv_Seagrass <-subset(selected_embayment_esv_subset, Habitat == "Seagrass")
+          c <-ggplot(selected_embayment_esv_Seagrass,aes(x = Year, y = pct_change, 
+                                                     text = (paste("Year: ",Year, "\n",
+                                                                   "Percent change: ",pct_change, "\n",
+                                                                   "Embayment: ",`EMBAYMENT NAME`, "\n",
+                                                                   "Ecosystem Service: ",ES2, "\n",
+                                                                   "Connectivity Scale: ",ConnectivityScale, "\n",
+                                                                   "Connectivity Type: ", ConnectivityType))
+          ))+
+            geom_line(aes(group=ES2, color = ES2), linetype = 2)+ # linetype = 2 makes the line dashed
+            geom_point(shape = ifelse(selected_embayment_esv_Seagrass$Year == 2050, 9, 1), size = 2.5)+ # make a different symbol for the 2050 data point
+            geom_line(data=subset(selected_embayment_esv_Seagrass, Year <= 2016),aes(group = ES2, color = ES2))+ # plots the interval up to 2017 as a solid line over the dashed line for the complete record
+            scale_y_log10()+
+            scale_x_continuous(breaks = seq(1990, 2060, by = 10))+
+            #theme(legend.position="none")+
+            theme(legend.background = element_rect(colour = 'black', fill = 'white', linetype='solid')) +
+            ylab("Percent Change")+
+            guides(color=guide_legend(title='Ecosystem Service')) +
+            ggtitle("Displaying all Ecosystem Services within this embayment")
+          ggplotly(c, tooltip = "text") %>%
+            rangeslider(1990, 2060, thickness=0.01)
+        }
+        else if(input$data_esv_displayed=="Tidal Flats") {
+          selected_embayment_esv_TF <-subset(selected_embayment_esv_subset, Habitat == "Tidal Flats")
+          c <-ggplot(selected_embayment_esv_TF,aes(x = Year, y = pct_change, 
+                                                         text = (paste("Year: ",Year, "\n",
+                                                                       "Percent change: ",pct_change, "\n",
+                                                                       "Embayment: ",`EMBAYMENT NAME`, "\n",
+                                                                       "Ecosystem Service: ",ES2, "\n",
+                                                                       "Connectivity Scale: ",ConnectivityScale, "\n",
+                                                                       "Connectivity Type: ", ConnectivityType))
+          ))+
+            geom_line(aes(group=ES2, color = ES2), linetype = 2)+ # linetype = 2 makes the line dashed
+            geom_point(shape = ifelse(selected_embayment_esv_TF$Year == 2050, 9, 1), size = 2.5)+ # make a different symbol for the 2050 data point
+            geom_line(data=subset(selected_embayment_esv_TF, Year <= 2016),aes(group = ES2, color = ES2))+ # plots the interval up to 2017 as a solid line over the dashed line for the complete record
+            scale_y_log10()+
+            scale_x_continuous(breaks = seq(1990, 2060, by = 10))+
+            #theme(legend.position="none")+
+            theme(legend.background = element_rect(colour = 'black', fill = 'white', linetype='solid')) +
+            ylab("Percent Change")+
+            guides(color=guide_legend(title='Ecosystem Service')) +
+            ggtitle("Displaying all Ecosystem Services within this embayment")
+          ggplotly(c, tooltip = "text") %>%
+            rangeslider(1990, 2060, thickness=0.01)
+        }
+        else {
+          selected_embayment_esv_USM <-subset(selected_embayment_esv_subset, Habitat == "Unclassified Salt Marsh")
+          c <-ggplot(selected_embayment_esv_USM,aes(x = Year, y = pct_change, 
+                                                   text = (paste("Year: ",Year, "\n",
+                                                                 "Percent change: ",pct_change, "\n",
+                                                                 "Embayment: ",`EMBAYMENT NAME`, "\n",
+                                                                 "Ecosystem Service: ",ES2, "\n",
+                                                                 "Connectivity Scale: ",ConnectivityScale, "\n",
+                                                                 "Connectivity Type: ", ConnectivityType))
+          ))+
+            geom_line(aes(group=ES2, color = ES2), linetype = 2)+ # linetype = 2 makes the line dashed
+            geom_point(shape = ifelse(selected_embayment_esv_USM$Year == 2050, 9, 1), size = 2.5)+ # make a different symbol for the 2050 data point
+            geom_line(data=subset(selected_embayment_esv_USM, Year <= 2016),aes(group = ES2, color = ES2))+ # plots the interval up to 2017 as a solid line over the dashed line for the complete record
+            scale_y_log10()+
+            scale_x_continuous(breaks = seq(1990, 2060, by = 10))+
+            #theme(legend.position="none")+
+            theme(legend.background = element_rect(colour = 'black', fill = 'white', linetype='solid')) +
+            ylab("Percent Change")+
+            guides(color=guide_legend(title='Ecosystem Service')) +
+            ggtitle("Displaying all Ecosystem Services within this embayment")
+          ggplotly(c, tooltip = "text") %>%
+            rangeslider(1990, 2060, thickness=0.01)
+        }
+      }
+    }
+  })
 }
 
 shinyApp(ui, server)
